@@ -122,26 +122,63 @@ function Card({ children, className = '' }) {
 }
 
 function RevenueChart({ margin = false }) {
-  const line = margin
-    ? 'M34 139 L72 131 L110 137 L148 121 L186 116 L224 123 L262 105 L300 112 L338 91 L376 96 L414 84 L452 92 L490 75 L528 81 L566 64 L604 70 L642 54 L680 48 L700 43'
-    : 'M38 157 L61 153 L84 148 L107 151 L130 136 L153 130 L176 143 L199 126 L222 119 L245 124 L268 105 L291 110 L314 99 L337 107 L360 93 L383 104 L406 87 L429 95 L452 78 L475 83 L498 75 L521 68 L544 78 L567 62 L590 69 L613 55 L636 61 L659 48 L682 52 L705 40';
-  const endX = margin ? 700 : 705;
-  const endY = margin ? 43 : 40;
-  return <div className="chart-wrap"><svg className="chart" viewBox="0 0 740 230" preserveAspectRatio="none" role="img" aria-label={margin ? 'Gross margin trend' : 'Revenue versus token consumption trend'}>
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const revenue = [7200, 7400, 7600, 7480, 8150, 8420, 7910, 8650, 9010, 8840, 9450, 9290, 9860, 9530, 10120, 9820, 10680, 10390, 11120, 10910, 11580, 11920, 11350, 12480, 12140, 13040, 12730, 13610, 13360, 14030, 14520];
+  const tokens = [118, 127, 129, 145, 142, 154, 138, 162, 171, 164, 188, 183, 196, 191, 210, 202, 219, 213, 233, 227, 241, 251, 238, 267, 256, 276, 271, 289, 283, 306, 317];
+  const margins = [57.8, 58.4, 58.1, 59.2, 59.7, 59.4, 60.4, 60.0, 61.1, 60.7, 61.8, 61.5, 62.2, 61.8, 62.7, 62.3, 63.2, 62.9, 63.8, 63.5, 64.2, 63.9, 64.5, 64.0, 64.7, 64.4, 65.1, 64.8, 65.5, 65.8, 66.2];
+  const primary = margin ? margins : revenue;
+  const primaryRange = margin ? [55, 70] : [2000, 15000];
+  const chartLeft = 38; const chartRight = 705; const chartTop = 25; const chartBottom = 180;
+  const pointX = (index) => chartLeft + ((chartRight - chartLeft) * index) / (primary.length - 1);
+  const pointY = (value, range) => chartBottom - ((value - range[0]) / (range[1] - range[0])) * (chartBottom - chartTop);
+  const makePath = (values, range) => values.map((value, index) => `${index ? 'L' : 'M'}${pointX(index).toFixed(1)},${pointY(value, range).toFixed(1)}`).join(' ');
+  const primaryPath = makePath(primary, primaryRange);
+  const tokenPath = makePath(tokens, [85, 340]);
+  const hover = hoveredIndex === null ? null : { index: hoveredIndex, x: pointX(hoveredIndex), y: pointY(primary[hoveredIndex], primaryRange), secondaryY: pointY(tokens[hoveredIndex], [85, 340]) };
+  const tooltipX = hover ? Math.min(hover.x + 11, 576) : 0;
+  const handleMove = (event) => {
+    const clientX = event.touches?.[0]?.clientX ?? event.clientX;
+    if (!Number.isFinite(clientX)) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const viewX = ((clientX - bounds.left) / bounds.width) * 740;
+    const index = Math.max(0, Math.min(primary.length - 1, Math.round(((viewX - chartLeft) / (chartRight - chartLeft)) * (primary.length - 1))));
+    setHoveredIndex(index);
+  };
+  const labelForIndex = (index) => `Aug ${String(index + 1).padStart(2, '0')}`;
+  return <div className="chart-wrap"><svg className="chart interactive-chart" viewBox="0 0 740 230" preserveAspectRatio="none" role="img" aria-label={margin ? 'Interactive gross margin trend chart' : 'Interactive revenue and token consumption chart'}>
     <defs><linearGradient id={margin ? 'margin-gradient' : 'revenue-gradient'} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#77b999" stopOpacity=".22"/><stop offset="1" stopColor="#77b999" stopOpacity="0"/></linearGradient></defs>
     {[31, 76, 121, 166].map((y) => <line key={y} className="grid-line" x1="37" x2="706" y1={y} y2={y}/>) }
     <text className="axis-label" x="1" y="34">{margin ? '70%' : '৳14k'}</text><text className="axis-label" x="1" y="79">{margin ? '65%' : '৳10k'}</text><text className="axis-label" x="1" y="124">{margin ? '60%' : '৳6k'}</text><text className="axis-label" x="3" y="169">{margin ? '55%' : '৳2k'}</text>
     {!margin && <><text className="axis-label" textAnchor="end" x="738" y="34">340M</text><text className="axis-label" textAnchor="end" x="738" y="79">255M</text><text className="axis-label" textAnchor="end" x="738" y="124">170M</text><text className="axis-label" textAnchor="end" x="738" y="169">85M</text></>}
-    <path className="chart-area" fill={`url(#${margin ? 'margin-gradient' : 'revenue-gradient'})`} d={`${line} L${endX},180 L38,180Z`} />
-    <path className="chart-revenue" d={line}/>
-    {!margin && <path className="chart-tokens" d="M38 165 L61 159 L84 157 L107 145 L130 148 L153 139 L176 150 L199 136 L222 128 L245 133 L268 115 L291 119 L314 110 L337 114 L360 101 L383 109 L406 96 L429 101 L452 89 L475 91 L498 84 L521 78 L544 84 L567 69 L590 76 L613 65 L636 67 L659 55 L682 58 L705 45"/>}
-    <circle className="chart-point" cx={endX} cy={endY} r="3.5"/>
+    <path className="chart-area" fill={`url(#${margin ? 'margin-gradient' : 'revenue-gradient'})`} d={`${primaryPath} L${chartRight},${chartBottom} L${chartLeft},${chartBottom}Z`} />
+    <path className="chart-revenue" d={primaryPath}/>
+    {!margin && <path className="chart-tokens" d={tokenPath}/>}
+    {hover && <><line className="hover-rule" x1={hover.x} x2={hover.x} y1={chartTop} y2={chartBottom}/><circle className="chart-point hover" cx={hover.x} cy={hover.y} r="4"/>{!margin && <circle className="chart-token-point" cx={hover.x} cy={hover.secondaryY} r="3.5"/>}<g className="chart-tooltip" transform={`translate(${tooltipX} 30)`}><rect width="120" height={margin ? '38' : '50'} rx="5"/><text x="9" y="14" className="tooltip-date">{labelForIndex(hover.index)}</text><text x="9" y="28" className="tooltip-value">{margin ? `${margins[hover.index].toFixed(1)}% gross margin` : `৳${revenue[hover.index].toLocaleString()} revenue`}</text>{!margin && <text x="9" y="41" className="tooltip-subvalue">{tokens[hover.index]}M tokens</text>}</g></>}
+    <rect className="chart-hitbox" x={chartLeft} y={chartTop} width={chartRight - chartLeft} height={chartBottom - chartTop} onMouseMove={handleMove} onMouseLeave={() => setHoveredIndex(null)} onTouchMove={handleMove}/>
     <text className="axis-label" x="37" y="207">Aug 01</text><text className="axis-label" textAnchor="middle" x="260" y="207">Aug 11</text><text className="axis-label" textAnchor="middle" x="485" y="207">Aug 21</text><text className="axis-label" textAnchor="end" x="705" y="207">Aug 31</text>
-  </svg></div>;
+  </svg><div className="chart-hint">Hover over the chart to inspect a day</div></div>;
 }
 
 function KpiCard({ label, value, delta, alert = false }) {
-  return <article className="kpi-card"><div className="kpi-label">{label}<span className="info-dot">i</span></div><strong>{value}</strong><div className={`kpi-delta ${alert ? 'alert' : ''}`}><b>{delta}</b> vs. previous period</div><svg className="spark" width="74" height="30" viewBox="0 0 74 30" fill="none"><path d="M1 25C8 21 12 23 17 18s8 3 14-3 7 2 13-4 9 1 14-5 7-2 15-7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><path d="M1 29h72" stroke="#e9eeea"/></svg></article>;
+  return <article className="kpi-card"><div className="kpi-label">{label}<span className="info-dot">i</span></div><strong>{value}</strong><div className={`kpi-delta ${alert ? 'alert' : ''}`}><b>{delta}</b> vs. previous period</div><svg className="spark" width="74" height="30" viewBox="0 0 74 30" fill="none" role="img" aria-label={`${label}: ${value}, ${delta} versus previous period`}><title>{`${label}: ${value}, ${delta} versus previous period`}</title><path d="M1 25C8 21 12 23 17 18s8 3 14-3 7 2 13-4 9 1 14-5 7-2 15-7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><path d="M1 29h72" stroke="#e9eeea"/></svg></article>;
+}
+
+function PlanEconomics() {
+  const [hoveredPlan, setHoveredPlan] = useState(null);
+  const active = planSummary.find((item) => item.name === hoveredPlan);
+  return <div className="economic-list">{planSummary.map((item) => <div className={`economic-row interactive-bar ${hoveredPlan === item.name ? 'is-hovered' : ''}`} key={item.name} tabIndex="0" onMouseEnter={() => setHoveredPlan(item.name)} onMouseLeave={() => setHoveredPlan(null)} onFocus={() => setHoveredPlan(item.name)} onBlur={() => setHoveredPlan(null)}><div><span><i style={{ background: item.color }}/>{item.name}</span><small>{item.users} users</small></div><div className="paired-bar"><b style={{ width: item.revenueWidth }}/><em style={{ width: item.costWidth }}/></div><footer><span>Rev. <strong>{item.revenue}</strong></span><span>Cost <strong>{item.cost}</strong></span></footer>{hoveredPlan === item.name && <div className="economic-tooltip"><b>{item.name} plan</b><span>{item.users} active users</span><span>Revenue {item.revenue} · model cost {item.cost}</span></div>}</div>)}<div className="chart-hint plan-hint">Hover a plan bar to inspect its economics</div></div>;
+}
+
+function DonutChart() {
+  const [hovered, setHovered] = useState(null);
+  const slices = [
+    { name: 'OpenAI', share: 50.7, amount: '৳64,135', color: '#202520' },
+    { name: 'Anthropic', share: 24.8, amount: '৳31,372', color: '#75b997' },
+    { name: 'Google', share: 18.1, amount: '৳22,897', color: '#b8ddca' },
+    { name: 'Other', share: 6.4, amount: '৳8,096', color: '#e2e8e3' },
+  ];
+  const radius = 38; const circumference = 2 * Math.PI * radius; let offset = 0;
+  return <div className="donut-row"><div className="donut-chart"><svg viewBox="0 0 100 100" role="img" aria-label="Interactive model cost distribution" onMouseLeave={() => setHovered(null)}><circle cx="50" cy="50" r={radius} fill="none" stroke="#edf0ed" strokeWidth="11"/>{slices.map((slice) => { const dash = (slice.share / 100) * circumference; const circle = <circle key={slice.name} className={hovered?.name === slice.name ? 'active' : ''} cx="50" cy="50" r={radius} fill="none" stroke={slice.color} strokeWidth="11" strokeLinecap="butt" strokeDasharray={`${dash} ${circumference - dash}`} strokeDashoffset={-offset} transform="rotate(-90 50 50)" tabIndex="0" onMouseEnter={() => setHovered(slice)} onFocus={() => setHovered(slice)} onBlur={() => setHovered(null)}/>; offset += dash; return circle; })}</svg><div className="donut-center"><b>{hovered ? hovered.share + '%' : '৳126.5k'}</b><small>{hovered ? hovered.name : 'total cost'}</small></div>{hovered && <div className="donut-tooltip"><b>{hovered.name}</b><span>{hovered.amount} · {hovered.share}%</span></div>}</div><div className="cost-list">{slices.map((slice) => <button key={slice.name} onMouseEnter={() => setHovered(slice)} onMouseLeave={() => setHovered(null)} onFocus={() => setHovered(slice)} onBlur={() => setHovered(null)}><i style={{ background: slice.color }}/>{slice.name}<b>{slice.share}%</b></button>)}</div></div>;
 }
 
 function UserTable({ title, copy, rows, top, share }) {
@@ -159,8 +196,8 @@ function Overview({ plan, setPlan, leaderboard, setLeaderboard, showToast, goTo 
   return <>
     <PageHeader title="Usage intelligence" subtitle="Revenue, model spend, and customer usage across your OneAI workspace." status="Illustrative data · refreshed 7 min ago" />
     <div className="kpi-grid"><KpiCard label="Subscription revenue" value="৳360,280" delta="↑ 12.4%"/><KpiCard label="Token consumption" value="8.62B" delta="↑ 8.1%"/><KpiCard label="Model cost" value="৳126,500" delta="↑ 4.7%" alert/><KpiCard label="Gross margin" value="62.9%" delta="↑ 2.3pp"/></div>
-    <div className="main-split"><Card><CardHeading title="Revenue vs. token consumption" copy="Daily subscription revenue compared with total model tokens." menu/><div className="chart-meta"><span><i className="legend-line"/>Revenue</span><span><i className="legend-line dashed"/>Tokens</span><b>৳360.3k<small>8.62B tokens in period</small></b></div><RevenueChart/></Card><Card><CardHeading title="Plan economics" copy="Revenue against model cost by subscription." menu/><div className="economic-list">{planSummary.map((item) => <div className="economic-row" key={item.name}><div><span><i style={{ background: item.color }}/>{item.name}</span><small>{item.users} users</small></div><div className="paired-bar"><b style={{ width: item.revenueWidth }}/><em style={{ width: item.costWidth }}/></div><footer><span>Rev. <strong>{item.revenue}</strong></span><span>Cost <strong>{item.cost}</strong></span></footer></div>)}</div><div className="card-footer"><button onClick={() => goTo('spend')}>View subscription breakdown <Icon name="arrow" size={13}/></button></div></Card></div>
-    <Card className="model-usage"><CardHeading title="Model usage & cost" copy="Token volume and blended inference cost by LLM provider."/><div className="model-table-wrap"><ModelTable rows={modelRows}/></div><aside className="cost-aside"><h3>Cost distribution</h3><div className="donut-row"><div className="donut"><div><b>৳126.5k</b><small>total cost</small></div></div><div className="cost-list"><span><i className="black"/>OpenAI <b>50.7%</b></span><span><i/>Anthropic <b>24.8%</b></span><span><i className="pale"/>Google <b>18.1%</b></span><span><i className="gray"/>Other <b>6.4%</b></span></div></div><p><b>Efficiency note.</b> Route routine GPT traffic to DeepSeek to reduce blended model cost.</p></aside></Card>
+    <div className="main-split"><Card><CardHeading title="Revenue vs. token consumption" copy="Daily subscription revenue compared with total model tokens." menu/><div className="chart-meta"><span><i className="legend-line"/>Revenue</span><span><i className="legend-line dashed"/>Tokens</span><b>৳360.3k<small>8.62B tokens in period</small></b></div><RevenueChart/></Card><Card><CardHeading title="Plan economics" copy="Revenue against model cost by subscription." menu/><PlanEconomics/><div className="card-footer"><button onClick={() => goTo('spend')}>View subscription breakdown <Icon name="arrow" size={13}/></button></div></Card></div>
+    <Card className="model-usage"><CardHeading title="Model usage & cost" copy="Token volume and blended inference cost by LLM provider."/><div className="model-table-wrap"><ModelTable rows={modelRows}/></div><aside className="cost-aside"><h3>Cost distribution</h3><DonutChart/><p><b>Efficiency note.</b> Route routine GPT traffic to DeepSeek to reduce blended model cost.</p></aside></Card>
     <Card className="plan-analysis"><div className="analysis-top"><div><h2>Plan usage intelligence</h2><p>Find the highest- and lowest-usage customers within each subscription plan.</p></div><div className="plan-tabs">{Object.keys(usageData).map((item) => <button key={item} className={plan === item ? 'active' : ''} onClick={() => setPlan(item)}>{item} <span>· {usageData[item].users}</span></button>)}</div></div><div className="analysis-kpis"><div><span>{plan.toUpperCase()} USERS</span><b>{data.users}</b><small>active this period</small></div><div><span>AVG. TOKEN CONSUMPTION</span><b>{data.avgTokens}</b><small>per active user</small></div><div><span>AVG. MODEL COST</span><b>{data.avgCost}</b><small>per active user</small></div></div><div className="usage-tables"><UserTable title="Top 10 by usage" copy="Highest average token consumption this period" rows={data.top} share={data.topShare} top/><UserTable title="Bottom 10 by usage" copy="Lowest average token consumption this period" rows={data.bottom} share={data.bottomShare}/></div><div className="method-note">ⓘ Average token consumption is calculated per active user for Aug 01–31. Model cost includes input, output, and cached tokens across selected models.</div></Card>
     <Card className="leaderboard"><CardHeading title="Workspace leaderboard" copy="Celebrate the members getting the most value from OneAI this month." action={<button className="link-button" onClick={() => goTo('users')}>View all members <Icon name="arrow" size={13}/></button>}/><div className="leaderboard-grid"><div className="podium-area"><span className="eyebrow">Top AI power users</span><div className="toggle-tabs"><button className={leaderboard === 'tokens' ? 'active' : ''} onClick={() => setLeaderboard('tokens')}>By tokens</button><button className={leaderboard === 'savings' ? 'active' : ''} onClick={() => setLeaderboard('savings')}>By savings</button></div><div className="podium">{topThree.map(([name, value, rank], i) => <div className={`podium-person rank-${rank}`} key={name}><div className="crown">{rank === 1 ? '♛' : ''}</div><Avatar name={name} index={i}/><b>{name}</b><small>{value}</small><em>{rank}</em></div>)}</div></div><div className="leader-list">{leaders.map((row, i) => <div className="leader-row" key={row[0]}><span>{String(i + 4).padStart(2, '0')}</span><div className="member"><Avatar name={row[0]} index={i + 3}/><div><b>{row[0]}</b><small>{row[1]}</small></div></div><small className="leader-model">● {row[2]}</small><strong>{row[3]}<small>{leaderboard === 'tokens' ? 'tokens' : 'saved'}</small></strong></div>)}</div></div></Card>
   </>;
