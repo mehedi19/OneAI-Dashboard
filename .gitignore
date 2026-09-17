@@ -9,6 +9,9 @@ Thumbs.db
 
 # Local server / dependency artifacts
 node_modules/
+.next/
+.npm/
+.config/
 .venv/
 __pycache__/
 *.log

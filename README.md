@@ -1,30 +1,59 @@
 # OneAI Dashboard
 
-A responsive frontend prototype for the **OneAI** multi-model AI platform analytics and administration experience.
+A responsive **Next.js** frontend prototype for the OneAI multi-model AI platform analytics and administration experience.
 
-## Included
+## Product context
 
-- Revenue, token consumption, model cost, and margin reporting
-- Plan-level analytics for **Free**, **Lite**, **Plus**, and **Pro** subscriptions
-- Top and bottom user-usage analysis for every plan
-- AI power-user leaderboard
-- Multi-model catalog and smart-routing controls
-- User, role, invoice, settings, profile, notification, and workspace controls
-- Local OneAI and model-brand assets for GPT, Claude, Gemini, Grok, DeepSeek, MiniMax, and Veo
-- Responsive desktop, tablet, and mobile layout
+The dashboard is designed around the public OneAI experience at [oneaibd.com](https://oneaibd.com/), including the following subscription tiers:
+
+- **Free** — ৳0/month
+- **Lite** — ৳99/month launch offer
+- **Plus** — ৳299/month launch offer
+- **Pro** — ৳799/month launch offer
+
+It includes local brand assets and model icons for GPT, Claude, Gemini, Grok, DeepSeek, MiniMax, and Veo.
+
+## Dashboard capabilities
+
+- Revenue, token consumption, model cost, and gross-margin reporting
+- Plan-level analytics across Free, Lite, Plus, and Pro subscriptions
+- Interactive top-10 and bottom-10 customer usage analysis per plan
+- AI power-user leaderboard by tokens or routing savings
+- Multi-model catalog, access controls, creative-model overview, and routing controls
+- User search, plan/role filtering, invitations, admin profile drawer, and exports
+- Invoices, plan management, payment method, notifications, workspace switching, and settings controls
+- Responsive desktop, tablet, and mobile UI
 
 ## Run locally
 
-The project is dependency-free. From this directory, run:
+Install dependencies and start the Next.js development server:
 
 ```bash
-python3 -m http.server 8000 --bind 0.0.0.0
+npm install
+npm run dev
 ```
 
-Then open [http://localhost:8000](http://localhost:8000).
+Open [http://localhost:3000](http://localhost:3000).
+
+## Production build
+
+```bash
+npm run build
+npm run start
+```
+
+## Project structure
+
+```text
+app/
+  globals.css       # Responsive dashboard system and UI styling
+  layout.js         # App metadata and shared layout
+  page.js           # Client-side dashboard views and interactions
+public/assets/
+  oneai-logo-white.png
+  models/           # Local SVG model marks
+```
 
 ## Notes
 
-The dashboard interaction and visual data are frontend demonstration data. Integrate the UI with production billing, subscription, provider-usage, and user APIs to replace the sample metrics.
-
-Public plan and product references are aligned with [oneaibd.com](https://oneaibd.com/).
+Usage, revenue, cost, user, and leaderboard figures are frontend demonstration data. Connect production billing, subscription, provider-usage, and user APIs to replace the sample metrics.
