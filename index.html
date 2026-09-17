@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OneAI — Usage Intelligence</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&display=swap');
+
+    :root {
+      --ink: #101110;
+      --muted: #69706a;
+      --subtle: #979d98;
+      --line: #e6e8e4;
+      --paper: #fafaf8;
+      --canvas: #f3f4f1;
+      --card: #ffffff;
+      --green: #0f6b50;
+      --green-light: #dff2e9;
+      --green-pale: #eff8f3;
+      --black: #151615;
+      --shadow: 0 1px 2px rgba(17, 19, 17, .04), 0 8px 22px rgba(17, 19, 17, .025);
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--canvas); }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      letter-spacing: -0.012em;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .app { min-height: 100vh; display: flex; }
+    .sidebar {
+      width: 254px; flex: 0 0 254px; min-height: 100vh; background: #171817; color: #f5f6f3;
+      display: flex; flex-direction: column; padding: 20px 13px 14px; position: fixed; inset: 0 auto 0 0; z-index: 20;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 25px; }
+    .brand-mark { height: 25px; width: 25px; position: relative; display: grid; place-items: center; overflow: hidden; }
+    .brand-mark:before, .brand-mark:after { content: ""; position: absolute; border: 2px solid #fff; border-radius: 50%; width: 17px; height: 17px; }
+    .brand-mark:before { transform: translate(-3px, -3px); opacity: .95; }
+    .brand-mark:after { transform: translate(3px, 3px); opacity: .55; }
+    .brand-mark.has-logo:before, .brand-mark.has-logo:after { display: none; }
+    .brand-mark img { width: 25px; height: 25px; object-fit: contain; display:block; }
+    .brand-name { font-size: 17px; font-weight: 650; letter-spacing: -.055em; }
+    .workspace {
+      display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid #30312f; border-radius: 9px;
+      background: #20211f; margin: 0 0 22px; color: #f5f6f3;
+    }
+    .workspace-avatar { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 6px; background: #cee8db; color: #152d25; font-size: 10px; font-weight: 700; }
+    .workspace-text { flex: 1; min-width: 0; }
+    .workspace-label { display: block; font-size: 11px; color: #aaaead; line-height: 1; margin-bottom: 3px; }
+    .workspace-name { display: block; font-size: 12px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chevron { width: 15px; height: 15px; color: #a6aaa6; }
+    .nav-label { color: #8e9390; padding: 0 10px; margin: 0 0 7px; font-size: 10px; font-weight: 650; text-transform: uppercase; letter-spacing: .095em; }
+    .nav { margin-bottom: 22px; }
+    .nav-item {
+      border: 0; width: 100%; display: flex; align-items: center; gap: 11px; color: #b9bfba; background: transparent; height: 39px;
+      padding: 0 10px; border-radius: 7px; font-size: 13px; font-weight: 450; text-align: left; transition: .18s ease;
+    }
+    .nav-item:hover { background: #222321; color: #fff; }
+    .nav-item.active { color: #fff; background: #2a2c29; font-weight: 550; }
+    .nav-icon { width: 17px; height: 17px; opacity: .92; flex: 0 0 auto; }
+    .nav-item.active .nav-icon { color: #a8dcc6; }
+    .nav-spacer { flex: 1; }
+    .plan-box { border-top: 1px solid #30312f; padding: 17px 8px 5px; }
+    .plan-top { display: flex; justify-content: space-between; color: #d8dcda; font-size: 11px; margin-bottom: 8px; }
+    .plan-top b { font-weight: 550; }
+    .meter { height: 4px; border-radius: 6px; background: #323431; overflow: hidden; margin-bottom: 9px; }
+    .meter span { display: block; height: 100%; width: 68%; border-radius: inherit; background: #a2d7bf; }
+    .plan-copy { color: #8e9490; font-size: 10px; line-height: 1.55; margin: 0 0 12px; }
+    .upgrade-btn { width: 100%; color: #101110; background: #f0f2ee; border: 0; border-radius: 6px; height: 32px; font-size: 11px; font-weight: 600; }
+    .user-row { cursor: pointer; margin: 11px 2px 0; padding: 12px 8px 0; border-top: 1px solid #30312f; display: flex; align-items: center; gap: 9px; }
+    .user-avatar { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: #d7bfae; color: #3a271f; font-weight: 650; font-size: 10px; }
+    .user-name { color: #eaedea; font-size: 11px; font-weight: 550; }
+    .user-role { color: #969c97; font-size: 10px; margin-top: 2px; }
+    .dots { margin-left: auto; color: #a8ada9; font-size: 17px; line-height: 1; padding-bottom: 4px; }
+
+    .main { margin-left: 254px; min-width: 0; width: calc(100% - 254px); }
+    .topbar { height: 69px; background: rgba(250,250,248,.92); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 35px 0 37px; position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px); }
+    .crumb { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+    .crumb strong { color: var(--ink); font-size: 13px; font-weight: 600; }
+    .crumb-divider { color: #b9bfba; }
+    .top-actions { display: flex; align-items: center; gap: 9px; }
+    .icon-btn, .date-btn, .export-btn { border: 1px solid var(--line); background: #fff; height: 34px; border-radius: 7px; color: #424742; display: inline-flex; align-items: center; justify-content: center; }
+    .icon-btn { width: 34px; }
+    .date-btn { gap: 8px; padding: 0 11px; color: #3c413d; font-size: 11px; font-weight: 550; }
+    .export-btn { padding: 0 11px; gap: 7px; color: #161816; font-size: 11px; font-weight: 550; }
+    .icon-btn:hover, .date-btn:hover, .export-btn:hover { border-color: #c8cdc8; background: #fcfcfb; }
+    .tiny-icon { width: 15px; height: 15px; }
+
+    .content { max-width: 1510px; margin: 0 auto; padding: 31px 37px 48px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 25px; }
+    h1 { font-size: 25px; line-height: 1.15; letter-spacing: -.05em; margin: 0 0 7px; font-weight: 650; }
+    .page-subtitle { color: var(--muted); margin: 0; font-size: 12px; }
+    .status { display: inline-flex; align-items: center; gap: 6px; color: #5f6862; font-size: 10px; padding-bottom: 4px; white-space: nowrap; }
+    .status-dot { height: 6px; width: 6px; border-radius: 50%; background: #43a078; box-shadow: 0 0 0 3px #dff3e9; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 11px; overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 21px; }
+    .kpi { min-height: 139px; padding: 20px 21px 16px; position: relative; border-right: 1px solid var(--line); }
+    .kpi:last-child { border-right: none; }
+    .kpi-label { display: flex; align-items: center; gap: 7px; color: #6d736e; font-size: 11px; font-weight: 500; }
+    .kpi-info { height: 13px; width: 13px; border: 1px solid #c2c7c2; border-radius: 50%; color: #9ba19c; font-size: 8px; display: inline-grid; place-items: center; font-weight: 650; }
+    .kpi-value { font-size: 25px; font-weight: 650; letter-spacing: -.055em; margin-top: 15px; line-height: 1; }
+    .kpi-foot { margin-top: 9px; display: flex; align-items: center; gap: 6px; color: #747a75; font-size: 10px; }
+    .up { color: var(--green); background: var(--green-pale); border-radius: 4px; padding: 3px 5px; font-weight: 600; }
+    .down { color: #9d4d43; background: #fff2f0; border-radius: 4px; padding: 3px 5px; font-weight: 600; }
+    .kpi-spark { position: absolute; right: 18px; bottom: 20px; opacity: .9; }
+
+    .split-primary { display: grid; grid-template-columns: minmax(0, 1.68fr) minmax(300px, .92fr); gap: 21px; margin-bottom: 21px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 11px; box-shadow: var(--shadow); min-width: 0; }
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 21px 0; gap: 13px; }
+    .card-title { font-size: 13px; font-weight: 620; letter-spacing: -.025em; margin: 0 0 5px; }
+    .card-description { color: var(--muted); font-size: 10px; line-height: 1.5; margin: 0; }
+    .card-menu { border: 0; background: transparent; color: #7e857f; padding: 1px 0 5px 8px; letter-spacing: 2px; }
+    .chart-meta { padding: 17px 21px 0; display: flex; gap: 20px; align-items: center; }
+    .legend { display: inline-flex; align-items: center; gap: 6px; color: #5f6660; font-size: 10px; }
+    .legend-line { display: inline-block; width: 14px; height: 2px; background: #1d211e; border-radius: 3px; }
+    .legend-line.dashed { background: repeating-linear-gradient(to right, #56a982 0 4px, transparent 4px 7px); }
+    .revenue-big { margin-left: auto; text-align: right; font-weight: 650; font-size: 16px; letter-spacing: -.04em; }
+    .revenue-big small { display: block; color: #737974; font-size: 9px; font-weight: 500; letter-spacing: normal; margin-top: 2px; }
+    .chart-wrap { height: 216px; padding: 5px 12px 15px 8px; }
+    .chart { width: 100%; height: 100%; overflow: visible; }
+    .axis-label { font-size: 9px; fill: #89908a; font-family: Inter, sans-serif; }
+    .gridline { stroke: #eceeea; stroke-width: 1; }
+    .chart-area { fill: url(#revenueGradient); }
+    .chart-revenue { fill: none; stroke: #1b1e1b; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .chart-tokens { fill: none; stroke: #59a57f; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 4 5; }
+    .chart-point { fill: #fff; stroke: #1b1e1b; stroke-width: 2; }
+    .chart-tooltip { filter: drop-shadow(0 2px 6px rgba(0,0,0,.12)); }
+    .chart-tooltip rect { fill: #202320; rx: 4; }
+    .chart-tooltip text { fill: #fff; font-family: Inter, sans-serif; font-size: 9px; }
+
+    .economic-list { padding: 14px 20px 17px; }
+    .economic-row { padding: 10px 0; border-bottom: 1px solid #eef0ec; }
+    .economic-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .economic-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+    .plan-name { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; }
+    .plan-pip { width: 7px; height: 7px; border-radius: 50%; background: var(--pip); }
+    .plan-stats { color: #747a75; font-size: 10px; }
+    .bar-pair { position: relative; height: 5px; border-radius: 5px; background: #eef0ed; overflow: hidden; }
+    .bar-rev { position: absolute; height: 100%; left: 0; background: #242724; border-radius: inherit; }
+    .bar-cost { position: absolute; height: 100%; left: 0; background: #82c5a3; border-radius: inherit; opacity: .9; }
+    .economic-bottom { display: flex; justify-content: space-between; color: #818780; font-size: 9px; margin-top: 6px; }
+    .economic-bottom b { color: #3e4540; font-weight: 600; }
+    .card-footer { border-top: 1px solid #eef0ec; padding: 12px 20px; }
+    .text-link { font-size: 10px; color: #3d6f5b; background: transparent; border: 0; padding: 0; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+
+    .section-card { margin-bottom: 21px; }
+    .section-head { padding: 21px 21px 16px; display: flex; gap: 18px; align-items: flex-end; justify-content: space-between; border-bottom: 1px solid var(--line); }
+    .section-title { margin: 0 0 5px; font-size: 14px; font-weight: 630; letter-spacing: -.035em; }
+    .section-copy { margin: 0; color: var(--muted); font-size: 10px; }
+    .segment-control { padding: 3px; background: #f1f3f0; border-radius: 7px; display: inline-flex; gap: 2px; flex-wrap: nowrap; }
+    .segment { white-space: nowrap; border: 0; background: transparent; border-radius: 5px; color: #717771; padding: 6px 9px; font-size: 10px; font-weight: 550; transition: .18s; }
+    .segment.active { background: #fff; color: #151715; box-shadow: 0 1px 2px rgba(0,0,0,.09); }
+    .plans-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(270px, .8fr); }
+    .model-table-wrap { padding: 1px 21px 9px; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 600px; }
+    th { height: 38px; border-bottom: 1px solid #eceeeb; text-align: left; color: #858b86; font-size: 9px; letter-spacing: .025em; font-weight: 600; text-transform: uppercase; }
+    th.numeric, td.numeric { text-align: right; }
+    td { height: 51px; border-bottom: 1px solid #eff1ee; color: #535954; font-size: 11px; }
+    tr:last-child td { border-bottom: 0; }
+    .model-cell { display: flex; align-items: center; gap: 9px; min-width: 160px; }
+    .model-logo { width: 25px; height: 25px; border: 1px solid #e4e7e3; border-radius: 6px; background: #fafbfa; display: grid; place-items: center; font-weight: 700; font-size: 10px; color: #303530; letter-spacing: -.04em; }
+    .model-logo.an { background: #f5edff; color: #7651a6; border-color: #e8dbf9; }
+    .model-logo.gg { background: #ebf5ff; color: #3679bb; border-color: #d9ebfa; }
+    .model-logo.mt { background: #fff3e8; color: #c86d29; border-color: #f7dfca; }
+    .model-name { color: #252925; font-weight: 570; }
+    .model-vendor { color: #858a86; font-size: 9px; margin-top: 2px; }
+    .share { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
+    .sharebar { width: 42px; height: 4px; background: #edf0ed; border-radius: 5px; overflow: hidden; }
+    .sharebar span { display: block; height: 100%; background: #80c5a3; border-radius: inherit; }
+    .cost { font-weight: 600; color: #2c312e; }
+    .model-aside { border-left: 1px solid var(--line); padding: 20px; }
+    .model-aside-title { font-size: 11px; font-weight: 600; margin: 0 0 16px; }
+    .donut-row { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid #edf0ed; }
+    .donut { width: 95px; height: 95px; flex: 0 0 95px; }
+    .donut-number { font-size: 14px; fill: #1b201c; font-family: Inter, sans-serif; font-weight: 650; letter-spacing: -.05em; }
+    .donut-caption { font-size: 8px; fill: #808680; font-family: Inter, sans-serif; }
+    .donut-list { margin-top: 14px; display: grid; gap: 11px; }
+    .donut-item { display: flex; align-items: center; justify-content: space-between; color: #666d67; font-size: 10px; }
+    .donut-label { display: flex; align-items: center; gap: 7px; }
+    .donut-pip { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); }
+    .donut-item b { color: #303530; font-size: 10px; font-weight: 600; }
+    .insight-note { background: #f4faf6; border: 1px solid #dcefe4; border-radius: 7px; padding: 11px; margin-top: 19px; color: #4c6355; font-size: 10px; line-height: 1.45; }
+    .insight-note strong { color: #1b4634; }
+
+    .users-card { margin-bottom: 0; }
+    .users-title-row { padding: 21px 21px 16px; display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 1px solid var(--line); gap: 18px; }
+    .plan-switcher { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 1px; max-width: 65%; }
+    .plan-tab { background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 7px 9px; color: #707771; white-space: nowrap; font-size: 10px; font-weight: 550; }
+    .plan-tab:hover { background: #f5f6f3; }
+    .plan-tab.active { color: #163f2e; background: #e5f4eb; border-color: #cfe8da; }
+    .analysis-summary { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); background: #fcfcfa; }
+    .analysis-metric { padding: 15px 21px; border-right: 1px solid var(--line); }
+    .analysis-metric:last-child { border-right: 0; }
+    .analysis-metric span { display: block; color: #777e78; font-size: 9px; margin-bottom: 6px; }
+    .analysis-metric b { font-size: 14px; color: #212622; font-weight: 630; letter-spacing: -.035em; }
+    .analysis-metric em { color: #6d7570; font-size: 9px; font-style: normal; font-weight: 450; margin-left: 4px; }
+    .user-tables { display: grid; grid-template-columns: 1fr 1fr; }
+    .user-panel { min-width: 0; padding: 19px 21px 13px; }
+    .user-panel + .user-panel { border-left: 1px solid var(--line); }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 9px; }
+    .panel-title { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 620; margin: 0 0 3px; }
+    .panel-title .rank-icon { width: 16px; height: 16px; border-radius: 4px; background: #edf7f1; color: #1a7656; display: grid; place-items: center; }
+    .panel-title.low .rank-icon { background: #f3f4f2; color: #69716b; }
+    .panel-copy { margin: 0; color: #858b86; font-size: 9px; }
+    .panel-stat { color: #5e6761; font-size: 9px; text-align: right; }
+    .panel-stat b { display: block; color: #29312c; font-size: 11px; font-weight: 620; margin-bottom: 2px; }
+    .user-table { min-width: 0; }
+    .user-table th { height: 29px; font-size: 8px; }
+    .user-table td { height: 37px; font-size: 10px; }
+    .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 31px; color: #919791; }
+    .member { display: flex; align-items: center; gap: 7px; min-width: 105px; }
+    .member-avatar { width: 21px; height: 21px; display: grid; place-items: center; border-radius: 50%; background: var(--avatar); color: var(--avatar-ink); font-size: 8px; font-weight: 700; }
+    .member-name { color: #343934; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 105px; }
+    .member-email { color: #969b97; font-size: 8px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 108px; }
+    .user-cost { color: #343a35; font-weight: 570; }
+    .table-scroll { overflow-x: auto; }
+    .note-strip { display: flex; gap: 8px; padding: 11px 20px; color: #6c746e; font-size: 9px; background: #fafbf9; border-top: 1px solid #eef0ed; }
+    .note-icon { color: #4f8e70; flex: 0 0 auto; }
+
+    @media (max-width: 1160px) {
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .kpi:nth-child(2) { border-right: 0; }
+      .kpi:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .plans-layout { grid-template-columns: 1fr; }
+      .model-aside { border-left: 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
+      .model-aside-title { grid-column: 1 / -1; margin-bottom: -4px; }
+      .insight-note { margin-top: 0; }
+    }
+    @media (max-width: 920px) {
+      .sidebar { width: 68px; flex-basis: 68px; padding: 20px 9px; }
+      .brand { padding-left: 13px; padding-right: 0; }
+      .brand-name, .workspace-text, .workspace > .chevron, .nav-label, .nav-item span, .plan-box, .user-row > div:not(.user-avatar), .dots { display: none; }
+      .workspace { padding: 8px; justify-content: center; margin-bottom: 22px; }
+      .nav-item { justify-content: center; padding: 0; }
+      .sidebar .user-row { justify-content: center; border: 0; padding: 0; margin: 0; }
+      .main { margin-left: 68px; width: calc(100% - 68px); }
+      .split-primary { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .topbar { height: 59px; padding: 0 16px; }
+      .top-actions .icon-btn, .export-btn { display: none; }
+      .content { padding: 23px 16px 30px; }
+      .page-heading { align-items: flex-start; margin-bottom: 20px; }
+      .status { display: none; }
+      h1 { font-size: 23px; }
+      .kpis { grid-template-columns: 1fr; }
+      .kpi, .kpi:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--line); min-height: 116px; }
+      .kpi:last-child { border-bottom: 0; }
+      .section-head, .users-title-row { align-items: flex-start; flex-direction: column; }
+      .segment-control { align-self: stretch; }
+      .segment { flex: 1; }
+      .model-aside { display: block; }
+      .model-aside-title { margin-bottom: 16px; }
+      .insight-note { margin-top: 16px; }
+      .analysis-summary { grid-template-columns: 1fr; }
+      .analysis-metric { border-right: 0; border-bottom: 1px solid var(--line); }
+      .analysis-metric:last-child { border-bottom: 0; }
+      .user-tables { grid-template-columns: 1fr; }
+      .user-panel + .user-panel { border-left: 0; border-top: 1px solid var(--line); }
+      .plan-switcher { max-width: 100%; width: 100%; }
+      .chart-wrap { height: 190px; }
+      .revenue-big { display: none; }
+    }
+  
+    /* Extended application views */
+    .app-view { animation: pageIn .22s ease-out; }
+    .is-hidden { display: none !important; }
+    @keyframes pageIn { from { opacity: .35; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .view-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 23px; }
+    .view-heading h1 { margin-bottom: 7px; }
+    .view-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .button { height: 34px; display: inline-flex; align-items: center; gap: 7px; border-radius: 7px; padding: 0 11px; background: #fff; border: 1px solid var(--line); color: #343934; font-size: 11px; font-weight: 600; }
+    .button:hover { border-color: #bec5bf; background: #fbfcfa; }
+    .button.primary { background: var(--black); border-color: var(--black); color: #fff; }
+    .button.primary:hover { background: #30322f; }
+    .button.danger { color: #9a5146; }
+    .button svg { width: 14px; height: 14px; }
+    .micro-label { color: #868d87; font-size: 9px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; }
+    .page-grid { display: grid; gap: 21px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .mini-metric { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 17px; box-shadow: var(--shadow); min-height: 112px; }
+    .mini-metric strong { display: block; font-size: 20px; line-height: 1; margin: 11px 0 7px; letter-spacing: -.055em; }
+    .mini-metric .delta { font-size: 9px; color: #68706a; }
+    .mini-metric .delta b { color: var(--green); font-weight: 650; }
+    .mini-metric .delta.alert b { color: #a45146; }
+    .content-split { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(270px, .78fr); gap: 21px; }
+    .spend-chart { height: 237px; padding: 14px 17px 15px 9px; }
+    .stat-row { display: flex; gap: 16px; padding: 15px 20px 0; }
+    .stat-item { min-width: 100px; }
+    .stat-item b { display: block; font-size: 15px; letter-spacing: -.04em; }
+    .stat-item span { color: #7f857f; font-size: 9px; display: block; margin-top: 3px; }
+    .recommendations { padding: 2px 20px 10px; }
+    .recommendation { display: flex; align-items: center; gap: 11px; padding: 15px 0; border-bottom: 1px solid #edf0ed; }
+    .recommendation:last-child { border-bottom: 0; }
+    .recommendation-icon { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; background: #eff8f3; color: #287a5a; flex: 0 0 auto; }
+    .recommendation-icon svg { width: 15px; height: 15px; }
+    .recommendation-text { flex: 1; min-width: 0; }
+    .recommendation-title { color: #303631; font-size: 10px; font-weight: 620; margin-bottom: 3px; }
+    .recommendation-copy { color: #858b86; font-size: 9px; line-height: 1.35; }
+    .save-tag { color: #217154; background: #eaf6ee; padding: 4px 6px; border-radius: 4px; font-size: 9px; font-weight: 650; white-space: nowrap; }
+    .economics-table { padding: 2px 20px 15px; overflow-x: auto; }
+    .economics-table table { min-width: 740px; }
+    .margin-number { color: #197153; font-weight: 650; }
+    .margin-number.low { color: #b35c4d; }
+
+    .leaderboard-card { margin-top: 21px; overflow: hidden; }
+    .leaderboard-body { display: grid; grid-template-columns: minmax(0, .95fr) minmax(330px, 1.35fr); }
+    .podium-section { min-height: 269px; padding: 17px 21px 18px; background: #fbfcfa; border-right: 1px solid var(--line); }
+    .leaderboard-tabs { display: flex; gap: 2px; padding: 3px; border-radius: 7px; background: #eef0ed; width: fit-content; margin-left: auto; margin-top: -25px; }
+    .leaderboard-tab { border: 0; background: transparent; color: #757b76; font-size: 9px; font-weight: 600; padding: 5px 7px; border-radius: 5px; }
+    .leaderboard-tab.active { background: #fff; color: #242825; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+    .podium { height: 202px; display: flex; align-items: flex-end; justify-content: center; gap: 13px; padding: 20px 0 0; }
+    .podium-person { width: 78px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .crown { color: #956b23; font-size: 15px; height: 19px; }
+    .podium-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 3px solid #d8e9df; color: #1e503b; background: #eef6f1; font-size: 11px; font-weight: 700; position: relative; z-index: 2; }
+    .podium-person.two .podium-avatar { border-color: #e1e4e1; color: #545b55; background: #f4f5f3; }
+    .podium-person.three .podium-avatar { border-color: #eedfce; color: #775632; background: #faf3ea; }
+    .podium-name { color: #414842; font-size: 9px; white-space: nowrap; max-width: 82px; overflow: hidden; text-overflow: ellipsis; margin: 7px 0 4px; font-weight: 600; }
+    .podium-value { color: #7f867f; font-size: 8px; }
+    .podium-plinth { margin-top: 7px; height: var(--height); width: 100%; border-radius: 5px 5px 0 0; background: var(--plinth); color: #fff; display: grid; place-items: center; font-size: 10px; font-weight: 650; }
+    .leader-list { padding: 4px 20px 11px; }
+    .leader-row { display: grid; grid-template-columns: 28px minmax(120px, 1fr) 86px 84px; gap: 9px; align-items: center; min-height: 49px; border-bottom: 1px solid #edf0ed; }
+    .leader-row:last-child { border-bottom: 0; }
+    .leader-rank { color: #858c86; font-size: 10px; font-weight: 600; }
+    .leader-member { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .leader-member .member-name { max-width: none; }
+    .leader-member .member-email { max-width: none; }
+    .leader-model { display: flex; align-items: center; gap: 5px; color: #6e756f; font-size: 9px; white-space: nowrap; }
+    .leader-model i { width: 5px; height: 5px; border-radius: 50%; background: #74ba98; }
+    .leader-score { text-align: right; color: #303630; font-size: 10px; font-weight: 620; }
+    .leader-score small { color: #848a85; display: block; font-size: 8px; font-weight: 450; margin-top: 2px; }
+
+    .model-catalog { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+    .model-card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 16px; box-shadow: var(--shadow); transition: .16s ease; }
+    .model-card:hover { border-color: #c4cac4; transform: translateY(-1px); }
+    .model-card.disabled { opacity: .58; }
+    .model-card-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .provider-badge { display: inline-flex; gap: 5px; align-items: center; color: #707771; font-size: 9px; background: #f4f5f3; padding: 4px 6px; border-radius: 4px; }
+    .model-card h3 { font-size: 13px; margin: 13px 0 5px; font-weight: 630; letter-spacing: -.035em; }
+    .model-card p { font-size: 9px; color: #7e857f; line-height: 1.45; margin: 0; min-height: 27px; }
+    .model-card-bottom { display: flex; gap: 9px; align-items: center; justify-content: space-between; margin-top: 15px; padding-top: 12px; border-top: 1px solid #edf0ed; color: #6f766f; font-size: 9px; }
+    .model-latency strong { display: block; color: #343a35; font-size: 10px; font-weight: 600; margin-top: 2px; }
+    .switch { appearance: none; border: 0; background: #cfd4cf; border-radius: 10px; width: 30px; height: 17px; position: relative; transition: .18s; flex: 0 0 auto; }
+    .switch:after { content: ''; width: 13px; height: 13px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; box-shadow: 0 1px 2px rgba(0,0,0,.15); transition: .18s; }
+    .switch.on { background: #27805d; }
+    .switch.on:after { transform: translateX(13px); }
+    .model-policy { padding: 18px 20px; display: flex; align-items: center; gap: 12px; }
+    .policy-copy { flex: 1; }
+    .policy-copy h3 { margin: 0 0 4px; font-size: 11px; font-weight: 620; }
+    .policy-copy p { margin: 0; color: #7e857f; font-size: 9px; }
+    .routing-path { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .routing-chip { border: 1px solid #e0e5e0; color: #4d554e; border-radius: 5px; padding: 5px 7px; font-size: 9px; background: #fff; }
+    .routing-arrow { color: #a1a8a2; }
+
+    .toolbar { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+    .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 7px; }
+    .search { height: 32px; width: 220px; display: flex; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid #e1e5e1; border-radius: 6px; color: #89908a; background: #fff; }
+    .search svg { width: 14px; height: 14px; flex: 0 0 auto; }
+    .search input { width: 100%; outline: 0; border: 0; color: #343934; font-size: 10px; background: transparent; }
+    .select-btn { height: 32px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e1e5e1; color: #626a64; padding: 0 9px; background: #fff; font-size: 10px; }
+    .select-btn:hover { border-color: #c5cac5; }
+    .user-table-large { padding: 0 20px 8px; overflow-x: auto; }
+    .user-table-large table { min-width: 780px; }
+    .user-table-large td { height: 57px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; padding: 4px 6px; color: #4a785f; background: #eef8f2; border-radius: 4px; }
+    .status-pill i { width: 5px; height: 5px; border-radius: 50%; background: #4ba477; }
+    .role-pill { font-size: 9px; padding: 4px 6px; border-radius: 4px; background: #f1f3f0; color: #626963; }
+    .role-pill.admin { color: #4d456d; background: #f1eef9; }
+    .table-action { border: 0; color: #597265; background: transparent; font-size: 10px; padding: 5px; font-weight: 600; }
+    .empty-filter { padding: 34px; text-align: center; color: #7b827c; font-size: 11px; }
+
+    .invoice-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .78fr); gap: 21px; }
+    .invoice-list { padding: 2px 20px 13px; overflow-x: auto; }
+    .invoice-list table { min-width: 610px; }
+    .invoice-list td { height: 58px; }
+    .invoice-id { color: #2f3630; font-weight: 600; }
+    .invoice-date { color: #808680; font-size: 9px; margin-top: 3px; }
+    .invoice-status { color: #357759; font-size: 9px; font-weight: 600; }
+    .invoice-status.pending { color: #9a702d; }
+    .next-invoice { padding: 20px; }
+    .next-invoice-amount { font-size: 28px; font-weight: 650; letter-spacing: -.06em; margin: 16px 0 4px; }
+    .next-invoice-date { color: #7f867f; font-size: 10px; margin: 0 0 19px; }
+    .invoice-detail { border-top: 1px solid #edf0ed; padding: 12px 0; display: flex; justify-content: space-between; font-size: 10px; color: #727973; }
+    .invoice-detail b { color: #353b36; font-weight: 600; }
+    .payment-method { display: flex; gap: 9px; align-items: center; padding: 12px; border: 1px solid #e7eae7; border-radius: 7px; margin-top: 17px; }
+    .card-brand { height: 25px; width: 36px; border-radius: 5px; background: #192034; display: grid; place-items: center; color: #fff; font-size: 9px; font-weight: 700; font-style: italic; }
+
+    .settings-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 21px; align-items: start; }
+    .settings-nav { padding: 7px; }
+    .settings-nav button { display: flex; width: 100%; align-items: center; gap: 8px; border: 0; border-radius: 6px; background: transparent; padding: 9px; color: #6a716b; font-size: 10px; text-align: left; }
+    .settings-nav button.active { color: #1d3e30; background: #e9f4ed; font-weight: 620; }
+    .settings-content { min-width: 0; }
+    .settings-block { padding: 20px; margin-bottom: 14px; }
+    .settings-block h2 { margin: 0 0 4px; font-size: 13px; font-weight: 630; letter-spacing: -.035em; }
+    .settings-block > p { margin: 0 0 18px; color: #818781; font-size: 10px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .field { display: grid; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: #606761; font-size: 10px; font-weight: 600; }
+    .field input, .field select { height: 34px; border: 1px solid #dfe4df; background: #fff; color: #363c37; border-radius: 6px; padding: 0 9px; outline: 0; font-size: 10px; }
+    .field input:focus, .field select:focus { border-color: #6fae91; box-shadow: 0 0 0 3px #e8f5ed; }
+    .setting-toggle { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid #edf0ed; }
+    .setting-toggle:last-child { border-bottom: 0; }
+    .setting-toggle-copy { flex: 1; }
+    .setting-toggle-copy b { display: block; color: #3b423d; font-size: 10px; margin-bottom: 3px; }
+    .setting-toggle-copy span { color: #858b86; font-size: 9px; }
+    .danger-zone { border-color: #f1dcd8; }
+    .danger-zone h2 { color: #944e45; }
+
+    .popover { position: fixed; z-index: 70; background: #fff; border: 1px solid #e0e4e0; box-shadow: 0 14px 35px rgba(17,19,17,.13); border-radius: 9px; overflow: hidden; transform-origin: top right; }
+    .popover.hidden, .modal-backdrop.hidden, .drawer.hidden { display: none; }
+    #notificationButton { position: relative; }
+    #notificationButton:after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #3b9b70; position: absolute; top: 7px; right: 7px; border: 1.5px solid #fff; }
+    #notifications { top: 57px; right: 91px; width: 323px; }
+    #workspaceMenu { top: 83px; left: 14px; width: 228px; }
+    #dateMenu { top: 57px; right: 169px; width: 224px; }
+    .popover-head { padding: 14px 15px 10px; display: flex; align-items: center; justify-content: space-between; }
+    .popover-head b { font-size: 11px; }
+    .popover-head button { border: 0; color: #438063; background: transparent; font-size: 9px; font-weight: 600; }
+    .notice { display: flex; gap: 9px; padding: 12px 15px; border-top: 1px solid #edf0ed; }
+    .notice-dot { width: 7px; height: 7px; margin-top: 3px; border-radius: 50%; background: #57a77f; flex: 0 0 auto; }
+    .notice-dot.gray { background: #c8ceca; }
+    .notice b { display: block; color: #353b36; font-size: 10px; margin-bottom: 3px; }
+    .notice span { color: #868c87; font-size: 9px; line-height: 1.35; }
+    .workspace-choice { display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px 13px; border: 0; border-top: 1px solid #edf0ed; background: #fff; text-align: left; color: #3c433e; font-size: 10px; }
+    .workspace-choice:hover { background: #f7f9f6; }
+    .workspace-choice .workspace-avatar { width: 23px; height: 23px; }
+    .workspace-choice small { color: #898f8a; display: block; margin-top: 2px; }
+    .date-choice { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; border-top: 1px solid #edf0ed; background: #fff; color: #515851; font-size: 10px; }
+    .date-choice.active { background: #eff8f3; color: #1f5e45; font-weight: 600; }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 80; background: rgba(17,19,17,.36); display: grid; place-items: center; padding: 18px; }
+    .modal { width: min(465px, 100%); background: #fff; border-radius: 11px; box-shadow: 0 18px 55px rgba(0,0,0,.24); overflow: hidden; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+    .modal-head h2 { margin: 0; font-size: 14px; letter-spacing: -.03em; }
+    .close { width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 5px; background: #f1f3f0; color: #5d655e; font-size: 16px; }
+    .modal-body { padding: 19px; }
+    .modal-body > p { margin: 0 0 16px; color: #727a73; font-size: 10px; line-height: 1.5; }
+    .modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 19px; border-top: 1px solid var(--line); background: #fbfcfa; }
+    .drawer { position: fixed; inset: 0 0 0 auto; z-index: 81; width: min(390px, 100%); background: #fff; box-shadow: -12px 0 35px rgba(0,0,0,.14); overflow-y: auto; }
+    .drawer-head { padding: 18px 19px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+    .profile-hero { padding: 24px 20px 19px; text-align: center; border-bottom: 1px solid var(--line); }
+    .profile-avatar { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 11px; border-radius: 50%; background: #d7bfae; color: #3a271f; font-size: 18px; font-weight: 700; }
+    .profile-hero h2 { margin: 0 0 4px; font-size: 15px; letter-spacing: -.04em; }
+    .profile-hero p { margin: 0; color: #7c837d; font-size: 10px; }
+    .profile-row { display: flex; justify-content: space-between; padding: 13px 20px; border-bottom: 1px solid #edf0ed; color: #7a817b; font-size: 10px; }
+    .profile-row b { color: #373d38; font-weight: 600; }
+    .profile-action { width: calc(100% - 40px); margin: 18px 20px 0; }
+
+    @media (max-width: 1160px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .model-catalog { grid-template-columns: repeat(2, 1fr); } .leaderboard-body { grid-template-columns: 1fr; } .podium-section { border-right: 0; border-bottom: 1px solid var(--line); } }
+    @media (max-width: 800px) { .content-split, .invoice-layout, .settings-layout { grid-template-columns: 1fr; } .settings-nav { display: flex; overflow-x: auto; } .settings-nav button { min-width: max-content; } .model-policy { align-items: flex-start; flex-direction: column; } }
+    @media (max-width: 700px) { .view-heading { flex-direction: column; } .view-actions { justify-content: flex-start; } .metric-grid, .model-catalog { grid-template-columns: 1fr; } .form-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } .search { width: 150px; } .toolbar { align-items: flex-start; flex-direction: column; } .toolbar-left { width: 100%; } .toolbar-right { display: none; } #notifications { right: 14px; top: 51px; width: min(323px, calc(100% - 28px)); } #dateMenu { display: none; } .leader-row { grid-template-columns: 24px minmax(100px, 1fr) 78px; } .leader-model { display: none; } }
+
+
+    .app-footer { margin-top: 24px; padding: 21px 22px; background: #171817; color: #f4f6f3; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .footer-brand { display: flex; align-items: center; gap: 8px; }
+    .footer-brand img { width: 22px; height: 22px; object-fit: contain; }
+    .footer-brand b { font-size: 12px; letter-spacing: -.035em; }
+    .footer-brand span { color: #989e99; font-size: 9px; margin-left: 3px; }
+    .footer-links { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
+    .footer-links a { color: #aeb4af; text-decoration: none; font-size: 9px; }
+    .footer-links a:hover { color:#fff; }
+    @media (max-width: 700px) { .app-footer { align-items:flex-start; flex-direction:column; } .footer-links { gap:10px; } }
+
+
+    .subscription-catalog { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+    .subscription-plan { padding: 20px; position: relative; border-right: 1px solid var(--line); min-height: 180px; }
+    .subscription-plan:last-child { border-right: 0; }
+    .subscription-plan.featured { background: #f4faf6; }
+    .catalog-ribbon { position:absolute; top:0; right:12px; padding:4px 6px; border-radius: 0 0 4px 4px; background:#256f50; color:#fff; font-size:8px; text-transform:uppercase; letter-spacing:.06em; font-weight:650; }
+    .catalog-plan-dot { display:block; width:7px; height:7px; border-radius:50%; margin-bottom:10px; }
+    .catalog-plan-dot.muted { background:#adb4ae; }.catalog-plan-dot.blue{background:#7eabd6}.catalog-plan-dot.purple{background:#a77fc3}.catalog-plan-dot.gold{background:#c89b56}
+    .subscription-plan h3 { margin: 0 0 7px; font-size: 12px; letter-spacing:-.025em; }
+    .catalog-price { color:#1b211c; font-size:18px; font-weight:650; letter-spacing:-.055em; white-space:nowrap; }
+    .catalog-price s { font-size:10px; color:#969c97; font-weight:500; margin-right:3px; text-decoration-thickness:1px; }
+    .catalog-price small { color:#777e78; font-size:9px; letter-spacing:0; font-weight:500; }
+    .subscription-plan p { color:#707771; font-size:9px; line-height:1.45; margin:12px 0 9px; }
+    .catalog-access { color:#317558; font-size:8px; font-weight:600; line-height:1.4; }
+    .catalog-note { padding:11px 20px; border-top:1px solid var(--line); background:#fcfcfa; color:#788079; font-size:9px; }
+    @media (max-width: 1000px) { .subscription-catalog { grid-template-columns:repeat(2,1fr); }.subscription-plan:nth-child(2){border-right:0}.subscription-plan:nth-child(-n+2){border-bottom:1px solid var(--line)} }
+    @media (max-width: 540px) { .subscription-catalog { grid-template-columns:1fr; }.subscription-plan,.subscription-plan:nth-child(2){border-right:0;border-bottom:1px solid var(--line)}.subscription-plan:last-child{border-bottom:0} }
+
+
+    .media-card { margin-top:21px; }
+    .media-access { display:grid; grid-template-columns:repeat(3,1fr); }
+    .media-access > div { padding:19px 20px; border-right:1px solid var(--line); }.media-access > div:last-child{border-right:0}
+    .media-icon { width:26px;height:26px;display:grid;place-items:center;border-radius:6px;background:#edf7f1;color:#207252;font-size:12px;font-weight:700; }
+    .media-access h3 { color:#353b36;font-size:11px;margin:10px 0 5px; }.media-access p{color:#818781;font-size:9px;line-height:1.45;margin:0 0 8px;}.media-access span:last-child{color:#39795c;font-size:9px;font-weight:600;}
+    @media(max-width:700px){.media-access{grid-template-columns:1fr}.media-access>div{border-right:0;border-bottom:1px solid var(--line)}.media-access>div:last-child{border-bottom:0}}
+
+
+    /* Brand lock-up and readability pass */
+    .brand-full-logo { width: 101px; height: auto; display: block; }
+    .brand-collapsed-logo { display: none; width: 29px; height: 29px; object-fit: contain; }
+    .footer-brand img { width: 83px; height: auto; object-fit: contain; }
+    .model-logo img { width: 16px; height: 16px; object-fit: contain; display:block; }
+    .model-card .model-logo img { width: 17px; height:17px; }
+    .card-description, .section-copy { font-size: 11px; }
+    .micro-label, .model-vendor, .catalog-access, .catalog-note { font-size: 10px; }
+    .model-card p, .subscription-plan p, .recommendation-copy, .setting-toggle-copy span, .field label, .footer-brand span, .footer-links a { font-size: 10px; }
+    .model-card-bottom, .provider-badge, .media-access p, .media-access span:last-child { font-size: 10px; }
+    .user-table td { height: 41px; font-size: 11px; }
+    .user-table th { height: 31px; font-size: 9px; }
+    .member-email { font-size: 9px; }
+    .analysis-metric span { font-size: 10px; }
+    .note-strip { font-size: 10px; line-height: 1.45; }
+    @media (max-width:920px) { .brand-full-logo { display:none; } .brand-collapsed-logo { display:block; } }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><img class="brand-full-logo" src="assets/oneai-logo-white.png" alt="OneAI" /><img class="brand-collapsed-logo" src="assets/oneai-mark-white.png" alt="" /></div>
+      <button class="workspace" id="workspaceTrigger" onclick="togglePopover('workspaceMenu')" aria-label="Change workspace">
+        <span class="workspace-avatar">OA</span><span class="workspace-text"><span class="workspace-label">Workspace</span><span class="workspace-name">OneAI Bangladesh</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg>
+      </button>
+      <div class="nav-label">Analyze</div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="overview" onclick="navigate('overview', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><rect x="14" y="14" width="6.5" height="6.5" rx="1"/></svg><span>Overview</span>
+        </button>
+        <button class="nav-item" data-view="spend" onclick="navigate('spend', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h16"/><path d="m7 15 3.3-4 3 2.1L19 6.5"/></svg><span>Spend &amp; revenue</span>
+        </button>
+        <button class="nav-item" data-view="models" onclick="navigate('models', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3c4 0 7 2.7 7 6s-3 6-7 6-7-2.7-7-6 3-6 7-6Z"/><path d="M7 14v3.4C7 19.4 9.2 21 12 21s5-1.6 5-3.6V14"/><path d="M9 9h.01M15 9h.01"/></svg><span>Models</span>
+        </button>
+        <button class="nav-item" data-view="users" onclick="navigate('users', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.2"/><path d="M3.5 20c.5-3.5 2.5-5.5 5.5-5.5s5 2 5.5 5.5M14.5 15.5c2.6.1 4.5 1.6 5 4.5"/></svg><span>Users</span>
+        </button>
+      </nav>
+      <div class="nav-label">Manage</div>
+      <nav class="nav">
+        <button class="nav-item" data-view="invoices" onclick="navigate('invoices', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg><span>Invoices</span>
+        </button>
+        <button class="nav-item" data-view="settings" onclick="navigate('settings', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-2.2 2.2-.06-.06A1.7 1.7 0 0 0 15.67 18a1.7 1.7 0 0 0-1 1.55v.1h-3.1v-.1a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06-2.2-2.2.06-.06A1.7 1.7 0 0 0 6.84 14a1.7 1.7 0 0 0-1.55-1H5.2V9.9h.1a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06 2.2-2.2.06.06A1.7 1.7 0 0 0 10.58 5.2a1.7 1.7 0 0 0 1-1.55v-.1h3.1v.1a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06 2.2 2.2-.06.06a1.7 1.7 0 0 0-.34 1.87 1.7 1.7 0 0 0 1.55 1h.1V13H21a1.7 1.7 0 0 0-1.6 2Z"/></svg><span>Settings</span>
+        </button>
+      </nav>
+      <div class="nav-spacer"></div>
+      <div class="plan-box">
+        <div class="plan-top"><b>Pro plan</b><span>68% used</span></div>
+        <div class="meter"><span></span></div>
+        <p class="plan-copy">Token allowance resets in 13 days.</p>
+        <button class="upgrade-btn" onclick="openModal('planModal')">Manage plan</button>
+      </div>
+      <div class="user-row" onclick="openProfile()" role="button" tabindex="0">
+        <div class="user-avatar">SM</div><div><div class="user-name">Sofia Morgan</div><div class="user-role">Workspace owner</div></div><div class="dots">•••</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb"><span id="crumbGroup">Analytics</span><span class="crumb-divider">/</span><strong id="crumbPage">Overview</strong></div>
+        <div class="top-actions">
+          <button id="notificationButton" class="icon-btn" onclick="togglePopover('notifications')" aria-label="Notifications"><svg class="tiny-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button>
+          <button class="date-btn" onclick="togglePopover('dateMenu')"><svg class="tiny-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 9h17"/></svg>Aug 01 – Aug 31, 2026<svg class="tiny-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg></button>
+          <button class="export-btn" onclick="exportUsage()"><svg class="tiny-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M4 19.5h16"/></svg>Export</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <section id="overviewView" class="app-view">
+        <section class="page-heading">
+          <div><h1>Usage intelligence</h1><p class="page-subtitle">Revenue, model spend, and customer usage across your workspace.</p></div>
+          <div class="status"><span class="status-dot"></span>Data refreshed 7 min ago</div>
+        </section>
+
+        <section class="kpis" aria-label="Key performance indicators">
+          <article class="kpi"><div class="kpi-label">Subscription revenue <span class="kpi-info">i</span></div><div class="kpi-value">৳360,280</div><div class="kpi-foot"><span class="up">↑ 12.4%</span> vs. previous period</div><svg class="kpi-spark" width="70" height="29" viewBox="0 0 70 29" fill="none"><path d="M1 25C8 22 11 23 16 18s8 3 14-3 6 2 13-4 10 1 14-5 8-2 12-5" stroke="#75b999" stroke-width="1.7" stroke-linecap="round"/><path d="M1 28h68" stroke="#e9eeea"/></svg></article>
+          <article class="kpi"><div class="kpi-label">Token consumption <span class="kpi-info">i</span></div><div class="kpi-value">8.62B</div><div class="kpi-foot"><span class="up">↑ 8.1%</span> vs. previous period</div><svg class="kpi-spark" width="70" height="29" viewBox="0 0 70 29" fill="none"><path d="M1 24c6-4 10-1 15-6s7 3 13-3 6 2 12-4 7 1 12-2 8-1 16-7" stroke="#75b999" stroke-width="1.7" stroke-linecap="round"/><path d="M1 28h68" stroke="#e9eeea"/></svg></article>
+          <article class="kpi"><div class="kpi-label">Model cost</div><div class="kpi-value">৳126,500</div><div class="kpi-foot"><span class="down">↑ 4.7%</span> vs. previous period</div><svg class="kpi-spark" width="70" height="29" viewBox="0 0 70 29" fill="none"><path d="M1 25c7-2 9-8 14-5s8 1 13-5 8 2 13-2 10-4 13-1 8-3 15-10" stroke="#d89d85" stroke-width="1.7" stroke-linecap="round"/><path d="M1 28h68" stroke="#e9eeea"/></svg></article>
+          <article class="kpi"><div class="kpi-label">Gross margin <span class="kpi-info">i</span></div><div class="kpi-value">62.9%</div><div class="kpi-foot"><span class="up">↑ 2.3pp</span> vs. previous period</div><svg class="kpi-spark" width="70" height="29" viewBox="0 0 70 29" fill="none"><path d="M1 23c8 2 9-5 16-6s7 2 13-1 7-5 13-2 8-6 14-4 6-4 12-7" stroke="#75b999" stroke-width="1.7" stroke-linecap="round"/><path d="M1 28h68" stroke="#e9eeea"/></svg></article>
+        </section>
+
+        <section class="split-primary">
+          <article class="card">
+            <div class="card-head"><div><h2 class="card-title">Revenue vs. token consumption</h2><p class="card-description">Daily subscription revenue compared with total model tokens.</p></div><button class="card-menu" aria-label="Chart menu">•••</button></div>
+            <div class="chart-meta"><span class="legend"><i class="legend-line"></i>Revenue</span><span class="legend"><i class="legend-line dashed"></i>Tokens</span><div class="revenue-big">৳360.3k<small>8.62B tokens in period</small></div></div>
+            <div class="chart-wrap">
+              <svg class="chart" viewBox="0 0 740 230" preserveAspectRatio="none" role="img" aria-label="Revenue and token usage chart">
+                <defs><linearGradient id="revenueGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#7bbd9e" stop-opacity=".19"/><stop offset="100%" stop-color="#7bbd9e" stop-opacity="0"/></linearGradient></defs>
+                <line class="gridline" x1="37" x2="706" y1="31" y2="31"/><line class="gridline" x1="37" x2="706" y1="76" y2="76"/><line class="gridline" x1="37" x2="706" y1="121" y2="121"/><line class="gridline" x1="37" x2="706" y1="166" y2="166"/>
+                <text class="axis-label" x="1" y="34">৳14k</text><text class="axis-label" x="4" y="79">৳10k</text><text class="axis-label" x="4" y="124">৳6k</text><text class="axis-label" x="7" y="169">৳2k</text>
+                <text class="axis-label" text-anchor="end" x="738" y="34">340M</text><text class="axis-label" text-anchor="end" x="738" y="79">255M</text><text class="axis-label" text-anchor="end" x="738" y="124">170M</text><text class="axis-label" text-anchor="end" x="738" y="169">85M</text>
+                <path class="chart-area" d="M38,157 L61,153 L84,148 L107,151 L130,136 L153,130 L176,143 L199,126 L222,119 L245,124 L268,105 L291,110 L314,99 L337,107 L360,93 L383,104 L406,87 L429,95 L452,78 L475,83 L498,75 L521,68 L544,78 L567,62 L590,69 L613,55 L636,61 L659,48 L682,52 L705,40 L705,180 L38,180Z"/>
+                <path class="chart-revenue" d="M38,157 L61,153 L84,148 L107,151 L130,136 L153,130 L176,143 L199,126 L222,119 L245,124 L268,105 L291,110 L314,99 L337,107 L360,93 L383,104 L406,87 L429,95 L452,78 L475,83 L498,75 L521,68 L544,78 L567,62 L590,69 L613,55 L636,61 L659,48 L682,52 L705,40"/>
+                <path class="chart-tokens" d="M38,165 L61,159 L84,157 L107,145 L130,148 L153,139 L176,150 L199,136 L222,128 L245,133 L268,115 L291,119 L314,110 L337,114 L360,101 L383,109 L406,96 L429,101 L452,89 L475,91 L498,84 L521,78 L544,84 L567,69 L590,76 L613,65 L636,67 L659,55 L682,58 L705,45"/>
+                <line x1="521" x2="521" y1="28" y2="180" stroke="#b9c3bd" stroke-width="1" stroke-dasharray="3 4"/><circle class="chart-point" cx="521" cy="68" r="3.4"/>
+                <g class="chart-tooltip" transform="translate(486 32)"><rect width="71" height="28"/><text x="7" y="11">Aug 22</text><text x="7" y="22" font-weight="600">৳12,742 · 264M</text></g>
+                <text class="axis-label" x="37" y="207">Aug 01</text><text class="axis-label" text-anchor="middle" x="199" y="207">Aug 08</text><text class="axis-label" text-anchor="middle" x="360" y="207">Aug 15</text><text class="axis-label" text-anchor="middle" x="521" y="207">Aug 22</text><text class="axis-label" text-anchor="end" x="705" y="207">Aug 31</text>
+              </svg>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><h2 class="card-title">Plan economics</h2><p class="card-description">Revenue against model cost by subscription.</p></div><button class="card-menu" aria-label="Plan economics menu">•••</button></div>
+            <div class="economic-list">
+              <div class="economic-row" style="--pip:#b1b7b2"><div class="economic-top"><div class="plan-name"><i class="plan-pip"></i>Free</div><div class="plan-stats">5,841 users</div></div><div class="bar-pair"><span class="bar-rev" style="width:22%"></span><span class="bar-cost" style="width:17%"></span></div><div class="economic-bottom"><span>Rev. <b>৳0</b></span><span>Cost <b>৳18,420</b></span></div></div>
+              <div class="economic-row" style="--pip:#93b6de"><div class="economic-top"><div class="plan-name"><i class="plan-pip"></i>Lite</div><div class="plan-stats">1,284 users</div></div><div class="bar-pair"><span class="bar-rev" style="width:43%"></span><span class="bar-cost" style="width:23%"></span></div><div class="economic-bottom"><span>Rev. <b>৳127,116</b></span><span>Cost <b>৳38,610</b></span></div></div>
+              <div class="economic-row" style="--pip:#b795d0"><div class="economic-top"><div class="plan-name"><i class="plan-pip"></i>Plus</div><div class="plan-stats">550 users</div></div><div class="bar-pair"><span class="bar-rev" style="width:77%"></span><span class="bar-cost" style="width:52%"></span></div><div class="economic-bottom"><span>Rev. <b>৳164,450</b></span><span>Cost <b>৳57,800</b></span></div></div>
+              <div class="economic-row" style="--pip:#d6ae6d"><div class="economic-top"><div class="plan-name"><i class="plan-pip"></i>Pro</div><div class="plan-stats">86 users</div></div><div class="bar-pair"><span class="bar-rev" style="width:100%"></span><span class="bar-cost" style="width:84%"></span></div><div class="economic-bottom"><span>Rev. <b>৳68,714</b></span><span>Cost <b>৳11,670</b></span></div></div>
+            </div>
+            <div class="card-footer"><button class="text-link" onclick="navigate('spend',document.querySelector('[data-view=spend]'))">View subscription breakdown <span>→</span></button></div>
+          </article>
+        </section>
+
+        <section class="card section-card">
+          <div class="section-head"><div><h2 class="section-title">Model usage &amp; cost</h2><p class="section-copy">Token volume and blended inference cost by LLM provider.</p></div><div class="segment-control" aria-label="Model data type"><button class="segment active" onclick="setModelMode(this, 'All models')">All models</button><button class="segment" onclick="setModelMode(this, 'Text')">Text</button><button class="segment" onclick="setModelMode(this, 'Image')">Image</button></div></div>
+          <div class="plans-layout">
+            <div class="model-table-wrap"><table><thead><tr><th>Model</th><th class="numeric">Tokens</th><th class="numeric">Share</th><th class="numeric">Cost / 1M tokens</th><th class="numeric">Total cost</th></tr></thead>
+              <tbody>
+                <tr><td><div class="model-cell"><span class="model-logo"><img src="assets/models/gpt.svg" alt="GPT" /></span><div><div class="model-name">GPT</div><div class="model-vendor">OpenAI</div></div></div></td><td class="numeric">3.14B</td><td class="numeric"><div class="share"><div class="sharebar"><span style="width:36%"></span></div>36.4%</div></td><td class="numeric">৳16.50</td><td class="numeric cost">৳51,720</td></tr>
+                <tr><td><div class="model-cell"><span class="model-logo an"><img src="assets/models/claude.svg" alt="Claude" /></span><div><div class="model-name">Claude</div><div class="model-vendor">Anthropic</div></div></div></td><td class="numeric">2.06B</td><td class="numeric"><div class="share"><div class="sharebar"><span style="width:24%"></span></div>23.9%</div></td><td class="numeric">৳13.20</td><td class="numeric cost">৳27,200</td></tr>
+                <tr><td><div class="model-cell"><span class="model-logo gg"><img src="assets/models/gemini.svg" alt="Gemini" /></span><div><div class="model-name">Gemini</div><div class="model-vendor">Google</div></div></div></td><td class="numeric">1.67B</td><td class="numeric"><div class="share"><div class="sharebar"><span style="width:19%"></span></div>19.4%</div></td><td class="numeric">৳13.68</td><td class="numeric cost">৳22,850</td></tr>
+                <tr><td><div class="model-cell"><span class="model-logo mt"><img src="assets/models/grok.svg" alt="Grok" /></span><div><div class="model-name">Grok</div><div class="model-vendor">xAI</div></div></div></td><td class="numeric">1.02B</td><td class="numeric"><div class="share"><div class="sharebar"><span style="width:12%"></span></div>11.8%</div></td><td class="numeric">৳12.75</td><td class="numeric cost">৳13,000</td></tr>
+                <tr><td><div class="model-cell"><span class="model-logo"><img src="assets/models/deepseek.svg" alt="DeepSeek" /></span><div><div class="model-name">DeepSeek</div><div class="model-vendor">DeepSeek</div></div></div></td><td class="numeric">0.73B</td><td class="numeric"><div class="share"><div class="sharebar"><span style="width:8%"></span></div>8.5%</div></td><td class="numeric">৳16.07</td><td class="numeric cost">৳11,730</td></tr>
+              </tbody>
+            </table></div>
+            <aside class="model-aside"><h3 class="model-aside-title">Cost distribution</h3><div class="donut-row"><svg class="donut" viewBox="0 0 100 100"><circle cx="50" cy="50" r="37" fill="none" stroke="#edf0ed" stroke-width="11"/><circle cx="50" cy="50" r="37" fill="none" stroke="#202520" stroke-width="11" stroke-linecap="butt" stroke-dasharray="84.6 232.5" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="37" fill="none" stroke="#73ba98" stroke-width="11" stroke-linecap="butt" stroke-dasharray="67.5 249.6" stroke-dashoffset="-89" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="37" fill="none" stroke="#bbdfcd" stroke-width="11" stroke-linecap="butt" stroke-dasharray="44.4 272.7" stroke-dashoffset="-161" transform="rotate(-90 50 50)"/><text class="donut-number" x="50" y="48" text-anchor="middle">৳126.5k</text><text class="donut-caption" x="50" y="60" text-anchor="middle">TOTAL COST</text></svg><div class="donut-list"><div class="donut-item"><span class="donut-label"><i class="donut-pip" style="--dot:#202520"></i>OpenAI</span><b>50.7%</b></div><div class="donut-item"><span class="donut-label"><i class="donut-pip" style="--dot:#73ba98"></i>Anthropic</span><b>24.8%</b></div><div class="donut-item"><span class="donut-label"><i class="donut-pip" style="--dot:#bbdfcd"></i>Google</span><b>18.1%</b></div><div class="donut-item"><span class="donut-label"><i class="donut-pip" style="--dot:#e8ece8"></i>Other</span><b>6.4%</b></div></div></div><div class="insight-note"><strong>Efficiency note.</strong> GPT handles 36% of volume but represents 47% of spend. Route routine work to DeepSeek to reduce blended cost.</div></aside>
+          </div>
+        </section>
+
+        <section class="card users-card" id="userAnalysis">
+          <div class="users-title-row"><div><h2 class="section-title">Plan usage intelligence</h2><p class="section-copy">Find the highest- and lowest-usage customers within each subscription plan.</p></div><div class="plan-switcher" role="tablist" aria-label="Subscription plan"><button class="plan-tab active" data-plan="Plus" onclick="selectPlan(this)">Plus <span>· 550</span></button><button class="plan-tab" data-plan="Pro" onclick="selectPlan(this)">Pro <span>· 86</span></button><button class="plan-tab" data-plan="Lite" onclick="selectPlan(this)">Lite <span>· 1,284</span></button><button class="plan-tab" data-plan="Free" onclick="selectPlan(this)">Free <span>· 5,841</span></button></div></div>
+          <div class="analysis-summary"><div class="analysis-metric"><span id="activeLabel">PRO PAID USERS</span><b id="activeUsers">550</b><em>active this period</em></div><div class="analysis-metric"><span>AVG. TOKEN CONSUMPTION</span><b id="avgTokens">11.6M</b><em>per active user</em></div><div class="analysis-metric"><span>AVG. MODEL COST</span><b id="avgCost">৳105.09</b><em>per active user</em></div></div>
+          <div class="user-tables">
+            <div class="user-panel"><div class="panel-head"><div><h3 class="panel-title"><span class="rank-icon">↑</span>Top 10 by usage</h3><p class="panel-copy">Highest average token consumption this period</p></div><div class="panel-stat"><b id="topShare">21.8%</b>of plan tokens</div></div><div class="table-scroll"><table class="user-table"><thead><tr><th>#</th><th>Member</th><th class="numeric">Avg. tokens</th><th class="numeric">Model cost</th></tr></thead><tbody id="topUsers"></tbody></table></div></div>
+            <div class="user-panel"><div class="panel-head"><div><h3 class="panel-title low"><span class="rank-icon">↓</span>Bottom 10 by usage</h3><p class="panel-copy">Lowest average token consumption this period</p></div><div class="panel-stat"><b id="bottomShare">0.2%</b>of plan tokens</div></div><div class="table-scroll"><table class="user-table"><thead><tr><th>#</th><th>Member</th><th class="numeric">Avg. tokens</th><th class="numeric">Model cost</th></tr></thead><tbody id="bottomUsers"></tbody></table></div></div>
+          </div>
+          <div class="note-strip"><svg class="note-icon tiny-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg><span>Average token consumption is calculated per active user for Aug 01–31. Model cost includes input, output, and cached tokens across all selected models.</span></div>
+        </section>
+        <section class="card leaderboard-card" id="leaderboard">
+          <div class="section-head"><div><h2 class="section-title">Workspace leaderboard</h2><p class="section-copy">Celebrate the members getting the most value from OneAI this month.</p></div><button class="text-link" onclick="navigate('users',document.querySelector('[data-view=users]'))">View all members <span>→</span></button></div>
+          <div class="leaderboard-body">
+            <div class="podium-section"><div class="micro-label">Top AI power users</div><div class="leaderboard-tabs"><button class="leaderboard-tab active" onclick="setLeaderboard(this, 'tokens')">By tokens</button><button class="leaderboard-tab" onclick="setLeaderboard(this, 'savings')">By savings</button></div><div class="podium" id="podium"><div class="podium-person two"><div class="crown"></div><div class="podium-avatar">TP</div><div class="podium-name">Theo Park</div><div class="podium-value">51.9M tokens</div><div class="podium-plinth" style="--height:48px;--plinth:#a4aaa5">2</div></div><div class="podium-person"><div class="crown">♛</div><div class="podium-avatar">AL</div><div class="podium-name">Amara Lewis</div><div class="podium-value">58.4M tokens</div><div class="podium-plinth" style="--height:76px;--plinth:#267451">1</div></div><div class="podium-person three"><div class="crown"></div><div class="podium-avatar">MC</div><div class="podium-name">Maya Chen</div><div class="podium-value">49.8M tokens</div><div class="podium-plinth" style="--height:34px;--plinth:#bd9762">3</div></div></div></div>
+            <div class="leader-list" id="leaderList"><div class="leader-row"><div class="leader-rank">04</div><div class="leader-member"><span class="member-avatar" style="--avatar:#f1e0e0;--avatar-ink:#874d4b">JR</span><div><div class="member-name">Jordan Rivera</div><div class="member-email">Plus · 14 day streak</div></div></div><div class="leader-model"><i></i>GPT</div><div class="leader-score">46.7M<small>tokens</small></div></div><div class="leader-row"><div class="leader-rank">05</div><div class="leader-member"><span class="member-avatar" style="--avatar:#ece7d6;--avatar-ink:#6a5d2e">IS</span><div><div class="member-name">Ishaan Shah</div><div class="member-email">Plus · 9 day streak</div></div></div><div class="leader-model"><i></i>Claude</div><div class="leader-score">42.3M<small>tokens</small></div></div><div class="leader-row"><div class="leader-rank">06</div><div class="leader-member"><span class="member-avatar" style="--avatar:#dcecf0;--avatar-ink:#2c6470">ER</span><div><div class="member-name">Elena Rossi</div><div class="member-email">Plus · 12 day streak</div></div></div><div class="leader-model"><i></i>GPT</div><div class="leader-score">40.1M<small>tokens</small></div></div><div class="leader-row"><div class="leader-rank">07</div><div class="leader-member"><span class="member-avatar" style="--avatar:#e9dfe9;--avatar-ink:#755371">NW</span><div><div class="member-name">Noah Williams</div><div class="member-email">Plus · 7 day streak</div></div></div><div class="leader-model"><i></i>Gemini</div><div class="leader-score">38.6M<small>tokens</small></div></div><div class="leader-row"><div class="leader-rank">08</div><div class="leader-member"><span class="member-avatar" style="--avatar:#e5e7dc;--avatar-ink:#4e5d39">PN</span><div><div class="member-name">Priya Nair</div><div class="member-email">Plus · 11 day streak</div></div></div><div class="leader-model"><i></i>Claude</div><div class="leader-score">36.9M<small>tokens</small></div></div></div>
+          </div>
+        </section>
+
+        </section>
+
+        <section id="spendView" class="app-view is-hidden">
+          <div class="view-heading"><div><h1>Spend &amp; revenue</h1><p class="page-subtitle">Track revenue, model spend, and the health of every subscription tier.</p></div><div class="view-actions"><button class="button" onclick="openModal('alertModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>Set cost alert</button><button class="button primary" onclick="exportUsage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M4 19.5h16"/></svg>Export report</button></div></div>
+          <div class="metric-grid">
+            <article class="mini-metric"><div class="micro-label">Collected revenue</div><strong>৳360,280</strong><div class="delta"><b>↑ 12.4%</b> month over month</div></article>
+            <article class="mini-metric"><div class="micro-label">Model spend</div><strong>৳126,500</strong><div class="delta alert"><b>↑ 4.7%</b> month over month</div></article>
+            <article class="mini-metric"><div class="micro-label">Net contribution</div><strong>৳233,780</strong><div class="delta"><b>↑ 17.3%</b> month over month</div></article>
+            <article class="mini-metric"><div class="micro-label">Revenue / 1M tokens</div><strong>৳41.80</strong><div class="delta"><b>↑ ৳0.22</b> versus last month</div></article>
+          </div>
+          <div class="content-split">
+            <article class="card"><div class="card-head"><div><h2 class="card-title">Gross margin trend</h2><p class="card-description">Revenue after inference cost, updated daily.</p></div><button class="card-menu" onclick="showToast('Chart settings opened.')">•••</button></div><div class="stat-row"><div class="stat-item"><b>62.9%</b><span>Current margin</span></div><div class="stat-item"><b>60.6%</b><span>Last period</span></div><div class="stat-item"><b>+2.3pp</b><span>Period change</span></div></div><div class="spend-chart"><svg class="chart" viewBox="0 0 710 215" preserveAspectRatio="none"><defs><linearGradient id="marginFill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#88c5a7" stop-opacity=".24"/><stop offset="1" stop-color="#88c5a7" stop-opacity="0"/></linearGradient></defs><line class="gridline" x1="34" x2="700" y1="25" y2="25"/><line class="gridline" x1="34" x2="700" y1="70" y2="70"/><line class="gridline" x1="34" x2="700" y1="115" y2="115"/><line class="gridline" x1="34" x2="700" y1="160" y2="160"/><text class="axis-label" x="0" y="28">70%</text><text class="axis-label" x="0" y="73">65%</text><text class="axis-label" x="0" y="118">60%</text><text class="axis-label" x="0" y="163">55%</text><path fill="url(#marginFill)" d="M34 139 L72 131 L110 137 L148 121 L186 116 L224 123 L262 105 L300 112 L338 91 L376 96 L414 84 L452 92 L490 75 L528 81 L566 64 L604 70 L642 54 L680 48 L700 43 L700 175 L34 175Z"/><path class="chart-revenue" d="M34 139 L72 131 L110 137 L148 121 L186 116 L224 123 L262 105 L300 112 L338 91 L376 96 L414 84 L452 92 L490 75 L528 81 L566 64 L604 70 L642 54 L680 48 L700 43"/><circle class="chart-point" cx="700" cy="43" r="3.5"/><text class="axis-label" x="34" y="199">Aug 01</text><text class="axis-label" x="240" y="199">Aug 10</text><text class="axis-label" x="445" y="199">Aug 20</text><text class="axis-label" text-anchor="end" x="700" y="199">Aug 31</text></svg></div></article>
+            <article class="card"><div class="card-head"><div><h2 class="card-title">Optimization opportunities</h2><p class="card-description">Recommended actions based on the last 31 days.</p></div></div><div class="recommendations"><div class="recommendation"><span class="recommendation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M6.5 8.5 12 3l5.5 5.5M5 16h14"/></svg></span><div class="recommendation-text"><div class="recommendation-title">Route high-volume simple tasks</div><div class="recommendation-copy">Move 18% of GPT traffic to DeepSeek.</div></div><span class="save-tag">Save ~৳8,550</span></div><div class="recommendation"><span class="recommendation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m13 2-9 12h7l-1 8 10-13h-7l0-7Z"/></svg></span><div class="recommendation-text"><div class="recommendation-title">Enable prompt caching</div><div class="recommendation-copy">245 team prompts have repeated system context.</div></div><span class="save-tag">Save ~৳5,175</span></div><div class="recommendation"><span class="recommendation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h16"/><path d="m7 15 3.3-4 3 2.1L19 6.5"/></svg></span><div class="recommendation-text"><div class="recommendation-title">Review Free plan limits</div><div class="recommendation-copy">The top 1% of Free users generate 31% of plan cost.</div></div><span class="save-tag">Protect ~৳3,150</span></div></div><div class="card-footer"><button class="text-link" onclick="navigate('models',document.querySelector('[data-view=models]'))">Review model routing <span>→</span></button></div></article>
+          </div>
+          <article class="card"><div class="section-head"><div><h2 class="section-title">Plan-level unit economics</h2><p class="section-copy">A complete view of subscriber volume, revenue, tokens, model cost, and margin.</p></div><button class="button" onclick="exportUsage()">Download CSV</button></div><div class="economics-table"><table><thead><tr><th>Plan</th><th class="numeric">Active users</th><th class="numeric">Subscription revenue</th><th class="numeric">Tokens</th><th class="numeric">Model cost</th><th class="numeric">Gross margin</th></tr></thead><tbody><tr><td><div class="plan-name" style="--pip:#acb3ad"><i class="plan-pip"></i>Free</div></td><td class="numeric">5,841</td><td class="numeric">৳0.00</td><td class="numeric">1.44B</td><td class="numeric">৳18,420</td><td class="numeric"><span class="margin-number low">–</span></td></tr><tr><td><div class="plan-name" style="--pip:#8fb7df"><i class="plan-pip"></i>Lite</div></td><td class="numeric">1,284</td><td class="numeric">৳127,116</td><td class="numeric">2.02B</td><td class="numeric">৳38,610</td><td class="numeric"><span class="margin-number">64.0%</span></td></tr><tr><td><div class="plan-name" style="--pip:#b795d0"><i class="plan-pip"></i>Plus</div></td><td class="numeric">550</td><td class="numeric">৳164,450</td><td class="numeric">4.32B</td><td class="numeric">৳57,800</td><td class="numeric"><span class="margin-number">61.4%</span></td></tr><tr><td><div class="plan-name" style="--pip:#d6ae6d"><i class="plan-pip"></i>Pro</div></td><td class="numeric">86</td><td class="numeric">৳68,714</td><td class="numeric">0.84B</td><td class="numeric">৳11,670</td><td class="numeric"><span class="margin-number">87.2%</span></td></tr></tbody></table></div></article>
+          <article class="card"><div class="section-head"><div><h2 class="section-title">OneAI subscription catalog</h2><p class="section-copy">Public plan pricing currently live at oneaibd.com. Launch-offer price is shown where applicable.</p></div><a class="button" href="https://oneaibd.com/" target="_blank" rel="noreferrer">View public plans</a></div><div class="subscription-catalog"><div class="subscription-plan"><span class="catalog-plan-dot muted"></span><h3>Free</h3><div class="catalog-price">৳0 <small>/ month</small></div><p>Limited tokens · AI chat · Bangla &amp; English support</p><span class="catalog-access">DeepSeek · Gemini · Grok</span></div><div class="subscription-plan"><span class="catalog-plan-dot blue"></span><h3>Lite</h3><div class="catalog-price"><s>৳199</s> ৳99 <small>/ month</small></div><p>Chat, content tools, DOC/PDF, and image generation.</p><span class="catalog-access">DeepSeek · Gemini · Grok · GPT</span></div><div class="subscription-plan featured"><span class="catalog-ribbon">Best value</span><span class="catalog-plan-dot purple"></span><h3>Plus</h3><div class="catalog-price"><s>৳599</s> ৳299 <small>/ month</small></div><p>Balanced capacity, research, presentations, and business tools.</p><span class="catalog-access">DeepSeek · Gemini · Grok · GPT</span></div><div class="subscription-plan"><span class="catalog-plan-dot gold"></span><h3>Pro</h3><div class="catalog-price"><s>৳1,599</s> ৳799 <small>/ month</small></div><p>Maximum capacity, premium models, video, and priority processing.</p><span class="catalog-access">GPT · Claude · Gemini · Grok · DeepSeek</span></div></div><div class="catalog-note">🚀 50% welcome gift is subject to the public launch offer. Model and media access are governed by OneAI’s fair usage policy.</div></article>
+        </section>
+
+        <section id="modelsView" class="app-view is-hidden">
+          <div class="view-heading"><div><h1>Models</h1><p class="page-subtitle">Configure the multi-model workspace your team can use and route through OneAI.</p></div><div class="view-actions"><button class="button" onclick="showToast('Model comparison is being generated.')">Compare models</button><button class="button primary" onclick="openModal('modelModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>Add model</button></div></div>
+          <article class="card"><div class="model-policy"><div class="recommendation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M5 9h10M5 15h14"/><circle cx="17" cy="9" r="2"/><circle cx="10" cy="15" r="2"/></svg></div><div class="policy-copy"><h3>Smart routing is active</h3><p>OneAI sends requests to the best enabled model based on task, latency, and workspace policy.</p></div><div class="routing-path"><span class="routing-chip">Task classifier</span><span class="routing-arrow">→</span><span class="routing-chip">Best enabled model</span><span class="routing-arrow">→</span><span class="routing-chip">Fallback</span></div><button class="button" onclick="openModal('routingModal')">Configure</button></div></article>
+          <div class="model-catalog" id="modelCatalog" style="margin-top:21px">
+            <article class="model-card"><div class="model-card-top"><span class="model-logo"><img src="assets/models/gpt.svg" alt="GPT" /></span><button class="switch on" aria-label="Toggle GPT" onclick="toggleModel(this,'GPT')"></button></div><h3>GPT</h3><p>Best for complex reasoning, coding, and agentic work.</p><div class="model-card-bottom"><span class="provider-badge">OpenAI · Text</span><span class="model-latency">p50 <strong>1.8s</strong></span></div></article>
+            <article class="model-card"><div class="model-card-top"><span class="model-logo an"><img src="assets/models/claude.svg" alt="Claude" /></span><button class="switch on" aria-label="Toggle Claude" onclick="toggleModel(this,'Claude')"></button></div><h3>Claude</h3><p>Strong long-context writing and analytical work.</p><div class="model-card-bottom"><span class="provider-badge">Anthropic · Text</span><span class="model-latency">p50 <strong>2.2s</strong></span></div></article>
+            <article class="model-card"><div class="model-card-top"><span class="model-logo gg"><img src="assets/models/gemini.svg" alt="Gemini" /></span><button class="switch on" aria-label="Toggle Gemini" onclick="toggleModel(this,'Gemini')"></button></div><h3>Gemini</h3><p>Multimodal reasoning for detailed research and files.</p><div class="model-card-bottom"><span class="provider-badge">Google · Multimodal</span><span class="model-latency">p50 <strong>2.5s</strong></span></div></article>
+            <article class="model-card"><div class="model-card-top"><span class="model-logo"><img src="assets/models/deepseek.svg" alt="DeepSeek" /></span><button class="switch on" aria-label="Toggle DeepSeek" onclick="toggleModel(this,'DeepSeek')"></button></div><h3>DeepSeek</h3><p>Efficient reasoning for everyday chat, code, and research.</p><div class="model-card-bottom"><span class="provider-badge">DeepSeek · Text</span><span class="model-latency">p50 <strong>0.7s</strong></span></div></article>
+            <article class="model-card"><div class="model-card-top"><span class="model-logo mt"><img src="assets/models/grok.svg" alt="Grok" /></span><button class="switch" aria-label="Toggle Grok" onclick="toggleModel(this,'Grok')"></button></div><h3>Grok</h3><p>Real-time search, conversation, and image-aware tasks.</p><div class="model-card-bottom"><span class="provider-badge">xAI · Text</span><span class="model-latency">p50 <strong>1.3s</strong></span></div></article>
+            <article class="model-card"><div class="model-card-top"><span class="model-logo" style="background:#f3f3f2"><img src="assets/models/minimax.svg" alt="MiniMax" /></span><button class="switch" aria-label="Toggle MiniMax" onclick="toggleModel(this,'MiniMax')"></button></div><h3>MiniMax</h3><p>Video generation for premium creative workflows.</p><div class="model-card-bottom"><span class="provider-badge">MiniMax · Video</span><span class="model-latency">p50 <strong>4.1s</strong></span></div></article>
+            <article class="model-card"><div class="model-card-top"><span class="model-logo"><img src="assets/models/veo.svg" alt="Veo" /></span><button class="switch" aria-label="Toggle Veo" onclick="toggleModel(this,'Veo')"></button></div><h3>Veo</h3><p>Premium video generation for polished motion and visual storytelling.</p><div class="model-card-bottom"><span class="provider-badge">Google · Video</span><span class="model-latency">p50 <strong>6.4s</strong></span></div></article>
+          </div>
+          <article class="card" style="margin-top:21px"><div class="section-head"><div><h2 class="section-title">Model access policy</h2><p class="section-copy">Decide which models are available to each customer subscription plan.</p></div><button class="button" onclick="openModal('policyModal')">Edit policy</button></div><div class="model-table-wrap"><table><thead><tr><th>Model</th><th class="numeric">Free</th><th class="numeric">Lite</th><th class="numeric">Plus</th><th class="numeric">Pro</th><th class="numeric">Fallback</th></tr></thead><tbody><tr><td><div class="model-name">GPT</div></td><td class="numeric">—</td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric">DeepSeek</td></tr><tr><td><div class="model-name">Claude</div></td><td class="numeric">—</td><td class="numeric">—</td><td class="numeric">—</td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric">Gemini</td></tr><tr><td><div class="model-name">Gemini</div></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric">Grok</td></tr><tr><td><div class="model-name">Grok</div></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric">Gemini</td></tr><tr><td><div class="model-name">DeepSeek</div></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric"><span class="status-pill"><i></i>Enabled</span></td><td class="numeric">—</td></tr></tbody></table></div>
+</article>
+          <article class="card media-card"><div class="section-head"><div><h2 class="section-title">Creative model access</h2><p class="section-copy">Media models currently surfaced through OneAI’s premium plan controls.</p></div><span class="role-pill admin">Pro feature</span></div><div class="media-access"><div><span class="media-icon">◒</span><h3>Image generation</h3><p>Grok, GPT, and Nano Banana Lite for premium image workflows.</p><span>Available on Pro</span></div><div><span class="media-icon">▶</span><h3>Video generation</h3><p>Grok, MiniMax, and Veo for video creation and iteration.</p><span>Available on Pro</span></div><div><span class="media-icon">✦</span><h3>Productivity tools</h3><p>OneCode, AI Agent, DOC/PDF, and presentation experiences.</p><span>Lite, Plus &amp; Pro</span></div></div></article>
+
+        </section>
+
+        <section id="usersView" class="app-view is-hidden">
+          <div class="view-heading"><div><h1>Users</h1><p class="page-subtitle">Manage members, roles, and plan access for your OneAI workspace.</p></div><div class="view-actions"><button class="button" onclick="exportUsers()">Export users</button><button class="button primary" onclick="openModal('inviteModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>Invite member</button></div></div>
+          <div class="metric-grid"><article class="mini-metric"><div class="micro-label">Workspace members</div><strong>7,761</strong><div class="delta"><b>+326</b> in the last 30 days</div></article><article class="mini-metric"><div class="micro-label">Active this period</div><strong>5,482</strong><div class="delta"><b>70.6%</b> of all members</div></article><article class="mini-metric"><div class="micro-label">Workspace admins</div><strong>4</strong><div class="delta">All have SSO enforced</div></article><article class="mini-metric"><div class="micro-label">Pending invitations</div><strong>12</strong><div class="delta"><b>3</b> expire this week</div></article></div>
+          <article class="card" style="margin-top:21px"><div class="toolbar"><div class="toolbar-left"><label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg><input id="userSearch" oninput="renderWorkspaceUsers()" placeholder="Search name or email" /></label><select class="select-btn" id="userPlan" onchange="renderWorkspaceUsers()"><option value="All">All plans</option><option>Free</option><option>Lite</option><option>Plus</option><option>Pro</option></select><select class="select-btn" id="userRole" onchange="renderWorkspaceUsers()"><option value="All">All roles</option><option>Admin</option><option>Member</option></select></div><div class="toolbar-right"><span class="micro-label" id="userCount">7 members shown</span></div></div><div class="user-table-large"><table><thead><tr><th>Member</th><th>Role</th><th>Plan</th><th class="numeric">Avg. tokens</th><th class="numeric">Last active</th><th class="numeric">Status</th><th></th></tr></thead><tbody id="workspaceUsers"></tbody></table></div></article>
+        </section>
+
+        <section id="invoicesView" class="app-view is-hidden">
+          <div class="view-heading"><div><h1>Invoices</h1><p class="page-subtitle">Your subscription invoices, payment method, and upcoming billing details.</p></div><div class="view-actions"><button class="button" onclick="openModal('paymentModal')">Update payment method</button><button class="button primary" onclick="openModal('planModal')">Manage plan</button></div></div>
+          <div class="invoice-layout"><article class="card"><div class="section-head"><div><h2 class="section-title">Billing history</h2><p class="section-copy">All amounts are in BDT and reflect the active OneAI launch offer where applicable.</p></div><button class="button" onclick="showToast('Invoice history filters opened.')">2026 <span>⌄</span></button></div><div class="invoice-list"><table><thead><tr><th>Invoice</th><th>Issued</th><th class="numeric">Amount</th><th class="numeric">Status</th><th class="numeric"></th></tr></thead><tbody><tr><td><div class="invoice-id">INV-2026-0831</div><div class="invoice-date">Pro plan · Aug 01–31</div></td><td>Sep 01, 2026</td><td class="numeric">৳799</td><td class="numeric"><span class="invoice-status">Paid</span></td><td class="numeric"><button class="table-action" onclick="downloadInvoice('INV-2026-0831','৳799')">Download</button></td></tr><tr><td><div class="invoice-id">INV-2026-0731</div><div class="invoice-date">Pro plan · Jul 01–31</div></td><td>Aug 01, 2026</td><td class="numeric">৳799</td><td class="numeric"><span class="invoice-status">Paid</span></td><td class="numeric"><button class="table-action" onclick="downloadInvoice('INV-2026-0731','৳799')">Download</button></td></tr><tr><td><div class="invoice-id">INV-2026-0630</div><div class="invoice-date">Pro plan · Jun 01–30</div></td><td>Jul 01, 2026</td><td class="numeric">৳799</td><td class="numeric"><span class="invoice-status">Paid</span></td><td class="numeric"><button class="table-action" onclick="downloadInvoice('INV-2026-0630','৳799')">Download</button></td></tr><tr><td><div class="invoice-id">INV-2026-0531</div><div class="invoice-date">Pro plan · May 01–31</div></td><td>Jun 01, 2026</td><td class="numeric">৳799</td><td class="numeric"><span class="invoice-status">Paid</span></td><td class="numeric"><button class="table-action" onclick="downloadInvoice('INV-2026-0531','৳799')">Download</button></td></tr><tr><td><div class="invoice-id">INV-2026-0430</div><div class="invoice-date">Pro plan · Apr 01–30</div></td><td>May 01, 2026</td><td class="numeric">৳799</td><td class="numeric"><span class="invoice-status">Paid</span></td><td class="numeric"><button class="table-action" onclick="downloadInvoice('INV-2026-0430','৳799')">Download</button></td></tr></tbody></table></div></article><aside class="card"><div class="next-invoice"><div class="micro-label">Next invoice</div><div class="next-invoice-amount">৳799</div><p class="next-invoice-date">Estimated to be issued on Oct 01, 2026</p><div class="invoice-detail"><span>Pro plan</span><b>৳799</b></div><div class="invoice-detail"><span>Premium AI & media access</span><b>Included</b></div><div class="invoice-detail"><span>Extra usage</span><b>৳0.00</b></div><div class="invoice-detail"><span>Estimated total</span><b>৳799</b></div><div class="payment-method"><span class="card-brand">VISA</span><div><div class="model-name">Visa ending in 4242</div><div class="model-vendor">Expires 09/29</div></div></div><button class="button" style="width:100%;justify-content:center;margin-top:10px" onclick="openModal('paymentModal')">Change payment method</button></div></aside></div>
+        </section>
+
+        <section id="settingsView" class="app-view is-hidden">
+          <div class="view-heading"><div><h1>Settings</h1><p class="page-subtitle">Control your OneAI workspace, safety preferences, and access policies.</p></div><div class="view-actions"><button class="button primary" onclick="saveSettings()">Save changes</button></div></div>
+          <div class="settings-layout"><aside class="card settings-nav"><button class="active" onclick="showSettingsPane('workspace',this)">Workspace</button><button onclick="showSettingsPane('access',this)">Access &amp; roles</button><button onclick="showSettingsPane('usage',this)">Usage controls</button><button onclick="showSettingsPane('security',this)">Security</button><button onclick="showSettingsPane('developer',this)">Developer</button></aside><div class="settings-content">
+            <div class="settings-pane" id="settings-workspace"><article class="card settings-block"><h2>Workspace details</h2><p>This is how your workspace appears to members and on exports.</p><div class="form-grid"><div class="field"><label>Workspace name</label><input value="OneAI Bangladesh" /></div><div class="field"><label>Default currency</label><select><option>BDT — Bangladeshi Taka</option><option>USD — US Dollar</option><option>EUR — Euro</option></select></div><div class="field full"><label>Workspace URL</label><input value="oneaibd.com/workspace/oneai-bd" /></div></div></article><article class="card settings-block"><h2>Product notifications</h2><p>Choose which workspace updates admins should receive.</p><div class="setting-toggle"><div class="setting-toggle-copy"><b>Weekly usage digest</b><span>Summary of spend, tokens, and plan activity each Monday.</span></div><button class="switch on" onclick="toggleSetting(this,'Weekly usage digest')"></button></div><div class="setting-toggle"><div class="setting-toggle-copy"><b>Cost anomaly alerts</b><span>Get alerted when daily spend is 25% higher than expected.</span></div><button class="switch on" onclick="toggleSetting(this,'Cost anomaly alerts')"></button></div><div class="setting-toggle"><div class="setting-toggle-copy"><b>Model release updates</b><span>Be first to know when a new provider model is available.</span></div><button class="switch" onclick="toggleSetting(this,'Model release updates')"></button></div></article></div>
+            <div class="settings-pane is-hidden" id="settings-access"><article class="card settings-block"><h2>Access &amp; roles</h2><p>Admins can manage billing, members, policies, and API keys. Members can only use approved models.</p><div class="setting-toggle"><div class="setting-toggle-copy"><b>Require admin approval for invites</b><span>Only workspace admins can invite new members.</span></div><button class="switch on" onclick="toggleSetting(this,'Invite approval')"></button></div><div class="setting-toggle"><div class="setting-toggle-copy"><b>Allow members to create shared spaces</b><span>Members can create collaboration spaces in this workspace.</span></div><button class="switch" onclick="toggleSetting(this,'Shared spaces')"></button></div></article><article class="card settings-block"><h2>Single sign-on</h2><p>SSO is enforced for administrators in this workspace.</p><button class="button" onclick="showToast('SSO configuration opened.')">Manage SSO</button></article></div>
+            <div class="settings-pane is-hidden" id="settings-usage"><article class="card settings-block"><h2>Usage controls</h2><p>Set default guardrails to keep multi-model usage predictable.</p><div class="form-grid"><div class="field"><label>Default monthly member token limit</label><input value="20,000,000" /></div><div class="field"><label>Cost alert threshold</label><input value="৳2k / day" /></div></div><div class="setting-toggle" style="margin-top:12px"><div class="setting-toggle-copy"><b>Restrict premium models after limit</b><span>Reroute to the best lower-cost enabled model.</span></div><button class="switch on" onclick="toggleSetting(this,'Premium model restrictions')"></button></div></article></div>
+            <div class="settings-pane is-hidden" id="settings-security"><article class="card settings-block"><h2>Security</h2><p>Protect workspace data and account access.</p><div class="setting-toggle"><div class="setting-toggle-copy"><b>Two-factor authentication for admins</b><span>All four workspace administrators are protected.</span></div><button class="switch on" onclick="toggleSetting(this,'Two-factor authentication')"></button></div><div class="setting-toggle"><div class="setting-toggle-copy"><b>Redact sensitive information in logs</b><span>Hide common personally identifiable information in request logs.</span></div><button class="switch on" onclick="toggleSetting(this,'Log redaction')"></button></div></article><article class="card settings-block danger-zone"><h2>Danger zone</h2><p>Export all workspace data or permanently delete this workspace.</p><div class="view-actions" style="justify-content:flex-start"><button class="button" onclick="exportUsage()">Export workspace data</button><button class="button danger" onclick="showToast('For safety, deletion must be confirmed by support.')">Delete workspace</button></div></article></div>
+            <div class="settings-pane is-hidden" id="settings-developer"><article class="card settings-block"><h2>Developer settings</h2><p>Secure API access for your OneAI workspace.</p><div class="setting-toggle"><div class="setting-toggle-copy"><b>Server API key</b><span>Last used 19 minutes ago · begins with oneai_sk_…9X3C</span></div><button class="button" onclick="showToast('API key copied to clipboard.')">Copy key</button></div><div class="setting-toggle"><div class="setting-toggle-copy"><b>Webhook endpoint</b><span>Receive usage and billing events in your application.</span></div><button class="button" onclick="showToast('Webhook setup opened.')">Configure</button></div></article></div>
+          </div></div>
+        </section>
+
+        <footer class="app-footer"><div class="footer-brand"><img src="assets/oneai-logo-white.png" alt="OneAI" /><span>All-in-one AI workspace</span></div><div class="footer-links"><a href="https://oneaibd.com/" target="_blank" rel="noreferrer">oneaibd.com</a><a href="https://oneaibd.com/fairusagepolicy" target="_blank" rel="noreferrer">Fair usage policy</a><a href="mailto:hello@oneaibd.com">Support</a><a href="#" onclick="showToast('OneAI Bangladesh · © 2026');return false">© 2026 OneAI</a></div></footer>
+
+      </div>
+    </main>
+  </div>
+  <div class="popover hidden" id="notifications"><div class="popover-head"><b>Notifications <span style="color:#4e9a73">· 3 new</span></b><button onclick="markNotificationsRead()">Mark all as read</button></div><div class="notice"><span class="notice-dot"></span><div><b>Usage alert ready to review</b><span>Plus plan model cost was 18% above its weekly baseline.</span></div></div><div class="notice"><span class="notice-dot"></span><div><b>New Claude model is available</b><span>You can enable it for Pro members in Models.</span></div></div><div class="notice"><span class="notice-dot gray"></span><div><b>August billing report generated</b><span>Download the full CSV from Spend &amp; revenue.</span></div></div></div>
+  <div class="popover hidden" id="workspaceMenu"><div class="popover-head"><b>Switch workspace</b><button onclick="showToast('Create workspace flow opened.')">New workspace</button></div><button class="workspace-choice" onclick="switchWorkspace('OneAI Bangladesh','OA')"><span class="workspace-avatar">OA</span><span>OneAI Bangladesh<small>7,761 members</small></span><span style="margin-left:auto;color:#398063">✓</span></button><button class="workspace-choice" onclick="switchWorkspace('Product Lab','PL')"><span class="workspace-avatar" style="background:#e7e1f2;color:#54406b">PL</span><span>Product Lab<small>32 members</small></span></button><button class="workspace-choice" onclick="switchWorkspace('Sandbox','SB')"><span class="workspace-avatar" style="background:#f1e5d8;color:#6c492a">SB</span><span>Sandbox<small>8 members</small></span></button></div>
+  <div class="popover hidden" id="dateMenu"><div class="popover-head"><b>Reporting period</b></div><button class="date-choice active" onclick="setPeriod(this,'Aug 01 – Aug 31, 2026')">Last 31 days</button><button class="date-choice" onclick="setPeriod(this,'Sep 01 – Sep 17, 2026')">This month</button><button class="date-choice" onclick="setPeriod(this,'Jul 01 – Jul 31, 2026')">Previous month</button><button class="date-choice" onclick="showToast('Custom date picker opened.')">Custom range…</button></div>
+
+  <div class="modal-backdrop hidden" id="inviteModal"><div class="modal"><div class="modal-head"><h2>Invite member</h2><button class="close" onclick="closeModal('inviteModal')">×</button></div><div class="modal-body"><p>Send a OneAI workspace invitation. You can adjust access after they join.</p><div class="field"><label>Email address</label><input id="inviteEmail" type="email" placeholder="name@company.com" /></div><div class="field" style="margin-top:13px"><label>Workspace role</label><select id="inviteRole"><option>Member</option><option>Admin</option></select></div></div><div class="modal-foot"><button class="button" onclick="closeModal('inviteModal')">Cancel</button><button class="button primary" onclick="sendInvite()">Send invite</button></div></div></div>
+  <div class="modal-backdrop hidden" id="modelModal"><div class="modal"><div class="modal-head"><h2>Add a provider model</h2><button class="close" onclick="closeModal('modelModal')">×</button></div><div class="modal-body"><p>Connect an approved provider model to make it available in your workspace.</p><div class="field"><label>Provider</label><select id="providerSelect"><option>OpenAI</option><option>Anthropic</option><option>Google</option><option>xAI</option><option>MiniMax Labs</option></select></div><div class="field" style="margin-top:13px"><label>Model ID</label><input id="modelId" placeholder="e.g. gpt" /></div></div><div class="modal-foot"><button class="button" onclick="closeModal('modelModal')">Cancel</button><button class="button primary" onclick="addModel()">Add model</button></div></div></div>
+  <div class="modal-backdrop hidden" id="routingModal"><div class="modal"><div class="modal-head"><h2>Smart routing</h2><button class="close" onclick="closeModal('routingModal')">×</button></div><div class="modal-body"><p>Choose the first priority for OneAI's model selection policy.</p><div class="field"><label>Optimize for</label><select><option>Balanced quality and cost</option><option>Lowest model cost</option><option>Best response quality</option><option>Lowest latency</option></select></div><div class="setting-toggle" style="margin-top:13px"><div class="setting-toggle-copy"><b>Allow fallback across providers</b><span>Retry with another enabled provider when a model is unavailable.</span></div><button class="switch on" onclick="toggleSetting(this,'Cross-provider fallback')"></button></div></div><div class="modal-foot"><button class="button" onclick="closeModal('routingModal')">Cancel</button><button class="button primary" onclick="closeModal('routingModal');showToast('Routing policy updated.')">Save policy</button></div></div></div>
+  <div class="modal-backdrop hidden" id="policyModal"><div class="modal"><div class="modal-head"><h2>Edit model access policy</h2><button class="close" onclick="closeModal('policyModal')">×</button></div><div class="modal-body"><p>Role-based and plan-based access controls apply before smart routing.</p><div class="setting-toggle"><div class="setting-toggle-copy"><b>Enable GPT for Plus</b><span>Allow Plus subscribers to select GPT directly.</span></div><button class="switch on" onclick="toggleSetting(this,'GPT Plus access')"></button></div><div class="setting-toggle"><div class="setting-toggle-copy"><b>Enable Claude for Pro</b><span>Allow Pro subscribers to select Claude directly.</span></div><button class="switch on" onclick="toggleSetting(this,'Claude Pro access')"></button></div></div><div class="modal-foot"><button class="button" onclick="closeModal('policyModal')">Cancel</button><button class="button primary" onclick="closeModal('policyModal');showToast('Model access policy saved.')">Save policy</button></div></div></div>
+  <div class="modal-backdrop hidden" id="alertModal"><div class="modal"><div class="modal-head"><h2>Set cost alert</h2><button class="close" onclick="closeModal('alertModal')">×</button></div><div class="modal-body"><p>OneAI will notify workspace admins when the selected spend threshold is reached.</p><div class="form-grid"><div class="field"><label>Alert when daily spend exceeds</label><input id="alertAmount" value="৳2k" /></div><div class="field"><label>Notify</label><select><option>All admins</option><option>Workspace owner only</option></select></div></div></div><div class="modal-foot"><button class="button" onclick="closeModal('alertModal')">Cancel</button><button class="button primary" onclick="saveAlert()">Create alert</button></div></div></div>
+  <div class="modal-backdrop hidden" id="paymentModal"><div class="modal"><div class="modal-head"><h2>Payment method</h2><button class="close" onclick="closeModal('paymentModal')">×</button></div><div class="modal-body"><p>Your current payment method is Visa ending in 4242. Add a new card to change billing.</p><div class="field"><label>Card number</label><input placeholder="4242 4242 4242 4242" /></div><div class="form-grid" style="margin-top:13px"><div class="field"><label>Expiration date</label><input placeholder="MM / YY" /></div><div class="field"><label>CVC</label><input placeholder="CVC" /></div></div></div><div class="modal-foot"><button class="button" onclick="closeModal('paymentModal')">Cancel</button><button class="button primary" onclick="closeModal('paymentModal');showToast('Payment method updated.')">Save card</button></div></div></div>
+  <div class="modal-backdrop hidden" id="planModal"><div class="modal"><div class="modal-head"><h2>Manage Pro plan</h2><button class="close" onclick="closeModal('planModal')">×</button></div><div class="modal-body"><p>Your Pro plan includes maximum AI capacity, premium models, image and video tools, and priority processing.</p><div class="setting-toggle"><div class="setting-toggle-copy"><b>Current monthly price</b><span>Renews on October 01, 2026.</span></div><b style="font-size:13px">৳799</b></div><div class="setting-toggle"><div class="setting-toggle-copy"><b>Premium access</b><span>Claude, GPT, image, and video models are available subject to fair use.</span></div><b style="font-size:13px">Included</b></div></div><div class="modal-foot"><button class="button" onclick="closeModal('planModal')">Close</button><button class="button primary" onclick="showToast('A plan specialist will contact you shortly.');closeModal('planModal')">Contact support</button></div></div></div>
+  <div class="drawer hidden" id="profileDrawer"><div class="drawer-head"><b style="font-size:13px">Admin profile</b><button class="close" onclick="closeProfile()">×</button></div><div class="profile-hero"><div class="profile-avatar" id="profileAvatar">SM</div><h2 id="profileName">Sofia Morgan</h2><p id="profileEmail">sofia@oneaibd.com</p></div><div class="profile-row"><span>Workspace role</span><b id="profileRole">Owner · Admin</b></div><div class="profile-row"><span>Plan</span><b id="profilePlan">Pro</b></div><div class="profile-row"><span>Last active</span><b id="profileActive">Just now</b></div><div class="profile-row"><span>Security</span><b style="color:#317958">2FA enabled</b></div><button class="button profile-action" onclick="showToast('Profile editor opened.')">Edit profile</button><button class="button profile-action" onclick="showToast('Password reset link sent to your email.')">Reset password</button><button class="button danger profile-action" onclick="showToast('Signed out of the active session.')">Sign out</button></div>
+
+    <div id="toast" style="position:fixed;bottom:20px;right:20px;background:#202320;color:#fff;padding:11px 14px;border-radius:7px;font:500 11px Inter, sans-serif;box-shadow:0 10px 25px rgba(0,0,0,.18);opacity:0;transform:translateY(8px);pointer-events:none;transition:.22s;z-index:50"></div>
+
+  <script>
+    const palettes = [
+      ['#deece4','#215c45'], ['#ebe1d4','#70482c'], ['#e2e5f3','#475681'], ['#f1e0e0','#874d4b'], ['#ece7d6','#6a5d2e'], ['#dcecf0','#2c6470'], ['#e9dfe9','#755371'], ['#e5e7dc','#4e5d39'], ['#dfe9f4','#436685'], ['#f3e4d9','#835036']
+    ];
+    const planData = {
+      Plus: { users:'550', label:'PLUS PAID USERS', avgTokens:'11.6M', avgCost:'৳105.09', topShare:'21.8%', bottomShare:'0.2%', top:[
+        ['Amara Lewis','amara@fable.studio','58.4M','৳86.12'],['Theo Park','theo@northstar.ai','51.9M','৳77.36'],['Maya Chen','maya@loomlabs.co','49.8M','৳73.44'],['Jordan Rivera','jordan@lemonade.io','46.7M','৳69.81'],['Ishaan Shah','ishaan@wavelength.dev','42.3M','৳63.21'],['Elena Rossi','elena@typeformly.com','40.1M','৳59.94'],['Noah Williams','noah@meridian.co','38.6M','৳57.22'],['Priya Nair','priya@relay.app','36.9M','৳54.18'],['Lucas Martin','lucas@aperture.ai','35.4M','৳52.96'],['Sara Kim','sara@fuse.com','33.7M','৳50.30']], bottom:[
+        ['Ben Carter','ben@pulse.dev','0.42M','৳0.61'],['Olivia Reed','olivia@cinder.io','0.48M','৳0.70'],['Nina Patel','nina@concord.co','0.51M','৳0.76'],['Jack Wilson','jack@fieldnote.app','0.54M','৳0.79'],['Eva Green','eva@hearth.studio','0.59M','৳0.86'],['Owen Brooks','owen@oakline.co','0.63M','৳0.91'],['Lena Hoffmann','lena@horizon.de','0.66M','৳0.97'],['Samir Khan','samir@clarity.io','0.69M','৳1.01'],['Ava Johnson','ava@tidal.app','0.73M','৳1.07'],['Miles Cooper','miles@parallel.co','0.78M','৳1.14']] },
+      Pro: { users:'86', label:'PRO PAID USERS', avgTokens:'37.3M', avgCost:'৳135.70', topShare:'34.5%', bottomShare:'0.8%', top:[
+        ['Wen Yao','wen@keystone.ai','164.8M','৳79.44'],['David Stone','david@signalgrid.io','147.2M','৳71.33'],['Reese Morgan','reese@arcadia.com','139.5M','৳67.51'],['Fatima Ali','fatima@ultra.work','132.1M','৳63.98'],['Cameron Lee','cameron@field.ai','128.6M','৳62.34'],['Harper White','harper@weave.one','121.4M','৳58.90'],['Mateo Silva','mateo@brio.dev','117.7M','৳57.10'],['Zoe Miller','zoe@bloom.co','113.2M','৳54.92'],['Andre Bell','andre@source.io','109.9M','৳53.19'],['Keiko Tanaka','keiko@canvas.jp','106.4M','৳51.47']], bottom:[
+        ['Jon Bell','jon@koko.ai','3.12M','৳1.51'],['Mary James','mary@inlet.io','3.48M','৳1.68'],['Ari Singh','ari@barge.co','3.77M','৳1.82'],['Talia Moore','talia@waypoint.dev','4.09M','৳1.98'],['Emil Novak','emil@alto.ai','4.33M','৳2.09'],['Kara Ng','kara@amber.co','4.61M','৳2.23'],['Diego Cruz','diego@splice.io','4.84M','৳2.34'],['June Park','june@parade.app','5.13M','৳2.48'],['Aiden Cole','aiden@lasso.co','5.42M','৳2.62'],['Riya Das','riya@folklore.dev','5.78M','৳2.79']] },
+      Lite: { users:'1,284', label:'LITE PAID USERS', avgTokens:'4.3M', avgCost:'৳30.07', topShare:'18.6%', bottomShare:'0.1%', top:[
+        ['Claire Dubois','claire@atelier.fr','29.7M','৳22.68'],['Marcus Hill','marcus@glide.app','27.9M','৳21.31'],['Yuki Sato','yuki@zenith.jp','26.4M','৳20.17'],['Anika Bose','anika@forage.io','25.8M','৳19.71'],['Tom Davies','tom@beacon.uk','24.3M','৳18.56'],['Mina Cho','mina@kinetic.co','23.7M','৳18.10'],['Vikram Rao','vikram@orbit.dev','22.9M','৳17.49'],['Ivy Scott','ivy@hush.io','22.4M','৳17.11'],['Felix Meyer','felix@sonder.de','21.8M','৳16.65'],['Ada Brooks','ada@copper.app','21.2M','৳16.19']], bottom:[
+        ['Max Chen','max@orbit.co','0.08M','৳0.06'],['Ellie Wood','ellie@lark.app','0.09M','৳0.07'],['Jo Kim','jo@inside.io','0.10M','৳0.08'],['Ray Singh','ray@newline.co','0.11M','৳0.08'],['Liam Fox','liam@north.io','0.12M','৳0.09'],['Chloe Bell','chloe@amity.app','0.13M','৳0.10'],['Nora Liu','nora@glow.co','0.14M','৳0.11'],['Neil Ross','neil@crest.ai','0.15M','৳0.11'],['Amy Hart','amy@twig.io','0.16M','৳0.12'],['Leo Wood','leo@dash.app','0.17M','৳0.13']] },
+      Free: { users:'5,841', label:'FREE USERS', avgTokens:'0.81M', avgCost:'৳3.15', topShare:'12.3%', bottomShare:'0.03%', top:[
+        ['Abby Wright','abby@hello.co','12.8M','৳7.81'],['Ethan Hall','ethan@acorn.app','11.9M','৳7.26'],['Mira Shah','mira@spring.io','11.4M','৳6.95'],['Kai Lewis','kai@learn.dev','10.9M','৳6.65'],['Grace Kim','grace@plane.so','10.6M','৳6.47'],['Caleb West','caleb@basil.app','10.1M','৳6.16'],['Mia Walker','mia@prism.co','9.8M','৳5.98'],['Ron Li','ron@linen.io','9.3M','৳5.67'],['Joan Reed','joan@light.app','8.9M','৳5.43'],['Finn Rose','finn@lattice.co','8.7M','৳5.31']], bottom:[
+        ['Toby Hill','toby@plain.co','0.01M','৳0.01'],['Ana Noor','ana@form.app','0.01M','৳0.01'],['Ira Cole','ira@root.io','0.01M','৳0.01'],['Bea Moss','bea@moon.co','0.01M','৳0.01'],['Ali Khan','ali@luna.dev','0.02M','৳0.01'],['Drew Ford','drew@solo.io','0.02M','৳0.01'],['Jill Ray','jill@echo.app','0.02M','৳0.01'],['Paul Day','paul@circa.ai','0.02M','৳0.01'],['Cleo Sun','cleo@atlas.co','0.02M','৳0.01'],['Hugo Bell','hugo@sparrow.app','0.02M','৳0.01']] }
+    };
+    function initials(name) { return name.split(' ').map(x => x[0]).join('').slice(0,2); }
+    function renderUsers(rows, target) {
+      const el = document.getElementById(target);
+      el.innerHTML = rows.map((u, i) => { const p = palettes[i]; return `<tr><td>${i+1}</td><td><div class="member"><span class="member-avatar" style="--avatar:${p[0]};--avatar-ink:${p[1]}">${initials(u[0])}</span><div><div class="member-name">${u[0]}</div><div class="member-email">${u[1]}</div></div></div></td><td class="numeric">${u[2]}</td><td class="numeric user-cost">${u[3]}</td></tr>`; }).join('');
+    }
+    function selectPlan(btn) {
+      const plan = btn.dataset.plan, d = planData[plan];
+      document.querySelectorAll('.plan-tab').forEach(x => x.classList.remove('active')); btn.classList.add('active');
+      document.getElementById('activeLabel').textContent = d.label;
+      document.getElementById('activeUsers').textContent = d.users;
+      document.getElementById('avgTokens').textContent = d.avgTokens;
+      document.getElementById('avgCost').textContent = d.avgCost;
+      document.getElementById('topShare').textContent = d.topShare;
+      document.getElementById('bottomShare').textContent = d.bottomShare;
+      renderUsers(d.top, 'topUsers'); renderUsers(d.bottom, 'bottomUsers');
+    }
+    function setModelMode(btn, mode) { document.querySelectorAll('.segment').forEach(x => x.classList.remove('active')); btn.classList.add('active'); if (mode !== 'All models') showToast(`${mode} model filtering is ready for your data source.`); }
+    let toastTimer;
+    function showToast(text) { const t=document.getElementById('toast'); t.textContent=text; t.style.opacity='1'; t.style.transform='translateY(0)'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(8px)'},2600); }
+    const viewMeta = {
+      overview: ['Analytics', 'Overview'],
+      spend: ['Analytics', 'Spend & revenue'],
+      models: ['Manage', 'Models'],
+      users: ['Manage', 'Users'],
+      invoices: ['Manage', 'Invoices'],
+      settings: ['Manage', 'Settings']
+    };
+    const workspaceMembers = [
+      {name:'Sofia Morgan', email:'sofia@oneaibd.com', role:'Admin', plan:'Pro', tokens:'45.2M', active:'Just now', initials:'SM', color:'#d7bfae', ink:'#3a271f'},
+      {name:'Amara Lewis', email:'amara@fable.studio', role:'Member', plan:'Plus', tokens:'58.4M', active:'4 min ago', initials:'AL', color:'#deece4', ink:'#215c45'},
+      {name:'Theo Park', email:'theo@northstar.ai', role:'Member', plan:'Plus', tokens:'51.9M', active:'21 min ago', initials:'TP', color:'#ebe1d4', ink:'#70482c'},
+      {name:'Maya Chen', email:'maya@loomlabs.co', role:'Admin', plan:'Plus', tokens:'49.8M', active:'1 hr ago', initials:'MC', color:'#e2e5f3', ink:'#475681'},
+      {name:'Wen Yao', email:'wen@keystone.ai', role:'Member', plan:'Pro', tokens:'164.8M', active:'2 hr ago', initials:'WY', color:'#e9dfe9', ink:'#755371'},
+      {name:'Claire Dubois', email:'claire@atelier.fr', role:'Member', plan:'Lite', tokens:'29.7M', active:'Yesterday', initials:'CD', color:'#ece7d6', ink:'#6a5d2e'},
+      {name:'Abby Wright', email:'abby@hello.co', role:'Member', plan:'Free', tokens:'12.8M', active:'2 days ago', initials:'AW', color:'#dcecf0', ink:'#2c6470'}
+    ];
+    const leaderboardData = {
+      tokens: {
+        podium:[['TP','Theo Park','51.9M tokens','two','#f4f5f3','#545b55','#a4aaa5','48px',''],['AL','Amara Lewis','58.4M tokens','one','#eef6f1','#1e503b','#267451','76px','♛'],['MC','Maya Chen','49.8M tokens','three','#faf3ea','#775632','#bd9762','34px','']],
+        rows:[['04','JR','Jordan Rivera','Plus · 14 day streak','GPT','46.7M'],['05','IS','Ishaan Shah','Plus · 9 day streak','Claude','42.3M'],['06','ER','Elena Rossi','Plus · 12 day streak','GPT','40.1M'],['07','NW','Noah Williams','Plus · 7 day streak','Gemini','38.6M'],['08','PN','Priya Nair','Plus · 11 day streak','Claude','36.9M']]
+      },
+      savings: {
+        podium:[['WY','Wen Yao','৳3,150 saved','two','#f4f5f3','#545b55','#a4aaa5','48px',''],['AL','Amara Lewis','৳536 saved','one','#eef6f1','#1e503b','#267451','76px','♛'],['TP','Theo Park','৳501 saved','three','#faf3ea','#775632','#bd9762','34px','']],
+        rows:[['04','MC','Maya Chen','Plus · smart routing','DeepSeek','৳474'],['05','ER','Elena Rossi','Plus · prompt caching','DeepSeek','৳409'],['06','JR','Jordan Rivera','Plus · smart routing','DeepSeek','৳398'],['07','IS','Ishaan Shah','Plus · fallback routing','MiniMax','৳356'],['08','CD','Claire Dubois','Lite · smart routing','Gemini','৳312']]
+      }
+    };
+    function navigate(view, button) {
+      document.querySelectorAll('.app-view').forEach(el => el.classList.add('is-hidden'));
+      const target = document.getElementById(view + 'View');
+      if (target) target.classList.remove('is-hidden');
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const nav = button || document.querySelector(`[data-view="${view}"]`);
+      if (nav) nav.classList.add('active');
+      document.getElementById('crumbGroup').textContent = viewMeta[view][0];
+      document.getElementById('crumbPage').textContent = viewMeta[view][1];
+      document.querySelectorAll('.popover').forEach(el => el.classList.add('hidden'));
+      window.scrollTo({top:0, behavior:'smooth'});
+      if(view === 'users') renderWorkspaceUsers();
+    }
+    function togglePopover(id) {
+      const target = document.getElementById(id), shouldOpen = target.classList.contains('hidden');
+      document.querySelectorAll('.popover').forEach(el => el.classList.add('hidden'));
+      if (shouldOpen) target.classList.remove('hidden');
+    }
+    function markNotificationsRead() {
+      document.querySelectorAll('#notifications .notice-dot').forEach(el => el.classList.add('gray'));
+      document.getElementById('notificationButton').style.setProperty('--read','1');
+      document.getElementById('notificationButton').style.setProperty('opacity','.7');
+      document.querySelector('#notifications .popover-head b').innerHTML = 'Notifications <span style="color:#89908a">· all caught up</span>';
+      showToast('All notifications marked as read.');
+    }
+    function switchWorkspace(name, initials) {
+      document.querySelector('.workspace-name').textContent = name;
+      document.querySelector('.workspace-avatar').textContent = initials;
+      document.getElementById('workspaceMenu').classList.add('hidden');
+      showToast(`Switched to ${name}.`);
+    }
+    function setPeriod(btn, label) {
+      document.querySelectorAll('.date-choice').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector('.date-btn').childNodes[1].nodeValue = ' ' + label;
+      document.getElementById('dateMenu').classList.add('hidden');
+      showToast(`Reporting period updated to ${label}.`);
+    }
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function toggleModel(btn, name) {
+      btn.classList.toggle('on');
+      const enabled = btn.classList.contains('on');
+      btn.setAttribute('aria-pressed', String(enabled));
+      btn.closest('.model-card').classList.toggle('disabled', !enabled);
+      showToast(`${name} ${enabled ? 'enabled' : 'disabled'} for smart routing.`);
+    }
+    function toggleSetting(btn, name) { const enabled = btn.classList.toggle('on'); btn.setAttribute('aria-pressed', String(enabled)); showToast(`${name} ${enabled ? 'enabled' : 'disabled'}.`); }
+    function showSettingsPane(name, button) {
+      document.querySelectorAll('.settings-pane').forEach(el => el.classList.add('is-hidden'));
+      document.getElementById('settings-' + name).classList.remove('is-hidden');
+      document.querySelectorAll('.settings-nav button').forEach(el => el.classList.remove('active'));
+      button.classList.add('active');
+    }
+    function renderWorkspaceUsers() {
+      const search = (document.getElementById('userSearch')?.value || '').toLowerCase();
+      const plan = document.getElementById('userPlan')?.value || 'All';
+      const role = document.getElementById('userRole')?.value || 'All';
+      const rows = workspaceMembers.filter(user => (plan === 'All' || user.plan === plan) && (role === 'All' || user.role === role) && (!search || `${user.name} ${user.email}`.toLowerCase().includes(search)));
+      const target = document.getElementById('workspaceUsers');
+      if (!target) return;
+      document.getElementById('userCount').textContent = `${rows.length} member${rows.length === 1 ? '' : 's'} shown`;
+      target.innerHTML = rows.length ? rows.map(user => `<tr><td><div class="member"><span class="member-avatar" style="--avatar:${user.color};--avatar-ink:${user.ink}">${user.initials}</span><div><div class="member-name">${user.name}</div><div class="member-email">${user.email}</div></div></div></td><td><span class="role-pill ${user.role === 'Admin' ? 'admin' : ''}">${user.role}</span></td><td>${user.plan}</td><td class="numeric">${user.tokens}</td><td class="numeric">${user.active}</td><td class="numeric"><span class="status-pill" style="${user.pending ? 'color:#8c6b2d;background:#fff7e7' : ''}"><i style="${user.pending ? 'background:#d6a34e' : ''}"></i>${user.pending ? 'Invited' : 'Active'}</span></td><td class="numeric"><button class="table-action" onclick="openMember('${user.name}')">View</button></td></tr>`).join('') : `<tr><td colspan="7" class="empty-filter">No members match these filters.</td></tr>`;
+    }
+    function openProfile() { document.getElementById('profileDrawer').classList.remove('hidden'); }
+    function closeProfile() { document.getElementById('profileDrawer').classList.add('hidden'); }
+    function openMember(name) {
+      const user = workspaceMembers.find(x => x.name === name);
+      if (!user) return;
+      document.getElementById('profileAvatar').textContent = user.initials;
+      document.getElementById('profileAvatar').style.background = user.color;
+      document.getElementById('profileAvatar').style.color = user.ink;
+      document.getElementById('profileName').textContent = user.name;
+      document.getElementById('profileEmail').textContent = user.email;
+      document.getElementById('profileRole').textContent = user.role === 'Admin' ? 'Admin' : 'Member';
+      document.getElementById('profilePlan').textContent = user.plan;
+      document.getElementById('profileActive').textContent = user.active;
+      document.querySelector('#profileDrawer .drawer-head b').textContent = 'Member profile';
+      openProfile();
+    }
+    function downloadFile(name, content, type='text/csv') {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type})); a.download = name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    }
+    function exportUsage() { downloadFile('oneai-usage-report-aug-2026.csv','Plan,Active users,Revenue,Tokens,Model cost,Margin\nFree,5841,0,1.44B,2848.20,\nLite,1284,11428.40,2.02B,4111.77,64.0%\nPlus,550,24177.60,4.32B,9324.98,61.4%\nPro,86,12654.80,0.84B,1620.50,87.2%'); showToast('Usage report downloaded.'); }
+    function exportUsers() { downloadFile('oneai-workspace-members.csv','Name,Email,Role,Plan,Average tokens,Last active\n' + workspaceMembers.map(u => `${u.name},${u.email},${u.role},${u.plan},${u.tokens},${u.active}`).join('\n')); showToast('Member list downloaded.'); }
+    function downloadInvoice(id, amount) { downloadFile(`${id}.txt`,`ONEAI\nInvoice: ${id}\nAmount paid: ${amount}\nStatus: Paid\nThank you for building with OneAI.`, 'text/plain'); showToast(`${id} downloaded.`); }
+    function sendInvite() {
+      const email = document.getElementById('inviteEmail').value.trim(); const role = document.getElementById('inviteRole').value;
+      if (!email || !email.includes('@')) { showToast('Enter a valid email address.'); return; }
+      const name = email.split('@')[0].split(/[._-]/).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ') || 'New member';
+      workspaceMembers.unshift({name, email, role, plan:'Lite', tokens:'—', active:'Invitation sent', initials:initials(name), color:'#e8eee9', ink:'#3b624b', pending:true});
+      closeModal('inviteModal'); document.getElementById('inviteEmail').value = ''; renderWorkspaceUsers(); showToast(`Invitation sent to ${email} as ${role}.`);
+    }
+    function addModel() {
+      const model = document.getElementById('modelId').value.trim() || 'New provider model';
+      const provider = document.getElementById('providerSelect').value;
+      const assetByProvider = {OpenAI:'gpt.svg', Anthropic:'claude.svg', Google:'gemini.svg', xAI:'grok.svg', DeepSeek:'deepseek.svg', MiniMax:'minimax.svg'};
+      const asset = assetByProvider[provider] || 'gpt.svg';
+      const safeModel = model.replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+      document.getElementById('modelCatalog').insertAdjacentHTML('beforeend', `<article class="model-card"><div class="model-card-top"><span class="model-logo"><img src="assets/models/${asset}" alt="${safeModel}" /></span><button class="switch on" aria-label="Toggle ${safeModel}" aria-pressed="true" onclick="toggleModel(this,this.closest('.model-card').querySelector('h3').textContent)"></button></div><h3>${safeModel}</h3><p>Custom provider model added for workspace review.</p><div class="model-card-bottom"><span class="provider-badge">${provider} · Custom</span><span class="model-latency">p50 <strong>—</strong></span></div></article>`);
+      closeModal('modelModal'); document.getElementById('modelId').value = ''; showToast(`${model} was added and enabled for smart routing.`);
+    }
+    function saveAlert() { closeModal('alertModal'); showToast(`Cost alert created at ${document.getElementById('alertAmount').value}.`); }
+    function saveSettings() { showToast('Workspace settings saved.'); }
+    function setLeaderboard(btn, type) {
+      document.querySelectorAll('.leaderboard-tab').forEach(el => el.classList.remove('active')); btn.classList.add('active');
+      const data=leaderboardData[type];
+      document.getElementById('podium').innerHTML = data.podium.map((p,i) => `<div class="podium-person ${p[3]}"><div class="crown">${p[8]}</div><div class="podium-avatar" style="background:${p[4]};color:${p[5]}">${p[0]}</div><div class="podium-name">${p[1]}</div><div class="podium-value">${p[2]}</div><div class="podium-plinth" style="--height:${p[7]};--plinth:${p[6]}">${i===0?2:i===1?1:3}</div></div>`).join('');
+      document.getElementById('leaderList').innerHTML = data.rows.map((r,i) => `<div class="leader-row"><div class="leader-rank">${r[0]}</div><div class="leader-member"><span class="member-avatar" style="--avatar:${palettes[(i+3)%palettes.length][0]};--avatar-ink:${palettes[(i+3)%palettes.length][1]}">${r[1]}</span><div><div class="member-name">${r[2]}</div><div class="member-email">${r[3]}</div></div></div><div class="leader-model"><i></i>${r[4]}</div><div class="leader-score">${r[5]}<small>${type === 'tokens' ? 'tokens' : 'saved'}</small></div></div>`).join('');
+    }
+
+    selectPlan(document.querySelector('.plan-tab.active'));
+  </script>
+</body>
+</html>

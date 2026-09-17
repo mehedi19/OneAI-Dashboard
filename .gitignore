@@ -1,0 +1,14 @@
+# User-supplied source artwork retained locally only
+uploads/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local server / dependency artifacts
+node_modules/
+.venv/
+__pycache__/
+*.log
